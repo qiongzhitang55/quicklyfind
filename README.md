@@ -89,9 +89,30 @@ D:\quicklyFind\                                    约 240 MB
 │  └─ _crawl\                  抓取记录：manifest / failed / linkcheck / toc.json
 │
 ├─ tools\                      全部脚本（Python + 1 个 Node 测试）
-├─ .pub-cache\                 Dart 依赖（沙箱外写不了，所以放工作区内）
-├─ _chm_extract\               空目录（你早先建的，未动）
+├─ .pub-cache\                 Dart 依赖（沙箱外写不了，所以放工作区内；已 gitignore）
+├─ .gitignore                  忽略构建产物 / 缓存 / 打包出来的 zip
 └─ README.md                   本文件
+```
+
+---
+
+## 版本管理
+
+仓库已 `git init`（分支 `main`），首次提交收录 14957 个文件，`git count-objects` 显示 81.5 MB。
+
+**入库**：`dnd_quickref\` `desktop_app\`（源码那层）`packaging\` `tools\` `dnd-data\`、规则语料 `rules-text\`、
+网站镜像 `5echm\`、`card\` 里的卡与模板、`实验区\` 的启动脚本、README。
+
+**不入库**（见 `.gitignore`）：`.pub-cache\`、`desktop_app\build\`、`desktop_app\windows\flutter\ephemeral\`、
+`.dart_tool\`、`__pycache__\`、`.idea\` / `*.iml`，以及全部打包产物——`车卡小工具_windows版\`、
+`法术速查填表-便携版\`、`桌面版\`、`*.zip`、`实验区\quickref.exe`、`实验区\out\` 日志、`.quickref.json`。
+这些都能用 `packaging\pack_windows.ps1` 或 `tools\` 里的脚本重新生成，所以没必要进版本库。
+
+镜像和语料占了仓库的绝大部分（约 220 MB）。以后要推远端的话，想让仓库瘦下来可以：
+
+```powershell
+git rm -r --cached 5echm rules-text      # 先取消跟踪，文件仍留在磁盘上
+# 再把 /5echm/ 和 /rules-text/ 写进 .gitignore 末尾，然后提交
 ```
 
 ---
