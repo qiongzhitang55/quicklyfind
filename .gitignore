@@ -1,0 +1,33 @@
+# ---- 打包产物：都可以由 packaging\pack_windows.ps1 重新生成 ----
+/车卡小工具_windows版/
+/车卡小工具_windows版.zip
+/法术速查填表-便携版/
+/法术速查填表-便携版.zip
+/桌面版/
+*.zip
+*.zip.bak-*
+
+# ---- Dart / Flutter ----
+.pub-cache/
+.dart_tool/
+.flutter-plugins-dependencies
+desktop_app/build/
+**/flutter/ephemeral/
+
+# ---- Python（tools\ 里的一次性脚本，只留源码）----
+__pycache__/
+*.pyc
+
+# ---- IDE ----
+.idea/
+*.iml
+
+# ---- 运行期状态 / 日志 ----
+.quickref.json
+实验区/out/
+*.log
+
+# ---- Windows / macOS 垃圾 ----
+Thumbs.db
+Desktop.ini
+.DS_Store

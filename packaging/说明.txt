@@ -1,0 +1,68 @@
+车卡小工具 · Windows 版
+========================
+
+这个文件夹可以直接整个拷走：U 盘、另一台电脑、桌面，放哪儿都能双击运行。
+不依赖 Dart / Flutter，也不依赖原来的工作区——要用的东西都在里面。
+
+怎么用
+------
+双击「车卡小道具.exe」。
+它自己会把同目录的 quickref.exe 拉起来（本地服务，只监听 127.0.0.1，
+端口随机挑一个空的），再用一个原生窗口显示界面；关掉窗口，服务也一起停。
+
+第一次打开会在 card\ 里自动生成一张「新人物卡.xlsx」（空白模板的副本）
+当目标表格，不会动模板本身。想换卡就点界面右下角的「使用已有表格 / 新建表格」。
+
+里面都有什么
+------------
+  车卡小道具.exe          窗口（Flutter 壳）
+  quickref.exe            本地服务（Dart AOT 编出来的，不用装 Dart）
+  flutter_windows.dll / webview_windows_plugin.dll / WebView2Loader.dll
+                          运行库
+  vcruntime140*.dll / msvcp140*.dll
+                          微软 VC++ 运行库（已放在包里，目标电脑不用再装）
+  data\                   壳自己的资源
+  web\                    界面（html / js / css）
+  dnd-data\               词条库：法术 798 / 职业特性 2080 / 专长 229 /
+                          种族特性 493 / 魔法物品 307
+  card\                   人物卡模板（空白卡v1.0.12.xlsx 是新建表格用的那份）
+  .quickref.json          记住你上次选的表（首次运行后出现）
+
+整包拷贝没问题，但别把里面的文件单独拆出来乱放：
+web\ dnd-data\ card\ 必须和 quickref.exe 在同一层。
+
+要求
+----
+Windows 10/11 64 位。界面用的是系统自带的 WebView2（Win11 自带；Win10 若没装，
+到微软官网装一个「WebView2 Runtime」即可，免费）。
+VC++ 运行库已经打在包里，不需要另外安装；如果只想零依赖，用下面的浏览器版。
+
+想要浏览器版
+------------
+双击「开浏览器版.bat」，或者手工跑：
+
+    quickref.exe --port 8765
+
+服务端支持的参数：
+
+    --port <端口>       默认 8765，被占用会自动往后找
+    --no-open           不自动开浏览器
+    --workspace <目录>  指一份自包含的目录（省得靠层级猜）
+    --web <目录>        单独指定界面目录
+    --data <目录>       单独指定词条目录
+    --card <文件>       指定初始目标表格
+    --template <文件>   指定空白模板
+
+改数据 / 改界面
+---------------
+词条在 dnd-data\*.json（格式见工作区里的 SCHEMA.md），
+界面在 web\index.html / app.js / style.css，改完重启窗口即可，不用重编。
+
+本包怎么来的
+------------
+工作区里跑：
+
+    powershell -ExecutionPolicy Bypass -File packaging\pack_windows.ps1
+
+它会重编服务端和外壳，把 web\ dnd-data\ card\ 一起组装到
+「车卡小工具_windows版\」，再压成同名 zip。

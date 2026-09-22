@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>法术速查填表</title>
+<link rel="stylesheet" href="style.css?v=11">
+</head>
+<body>
+<header>
+  <!-- 顶上这一条是「车卡进度」：哪些填了、哪些还没填、还能选什么（点一下跳过去） -->
+  <div class="progress" id="stat"></div>
+</header>
+<div id="staleWarn" class="stale" hidden>
+  服务端还是旧版本：请关掉那个黑色启动窗口，重新双击 <b>实验区\start.bat</b> 再刷新本页。
+</div>
+
+<div class="app">
+  <!-- 最左：设计树（按车卡顺序） -->
+  <aside class="tree" id="tree"></aside>
+  <div class="vs" id="splitTree" title="拖动调整设计树宽度"></div>
+
+  <main>
+   <!-- 法术页：左列表 / 中详情（抓到的法术进最右边的备选区） -->
+   <div class="view" id="viewSpell">
+    <!-- ① 左：法术列表 -->
+  <section class="pane pane-list">
+    <div class="pane-head">
+      <input id="q" type="search" placeholder="搜索法术（中文名 / 英文名 / 正文）… Ctrl+K" autocomplete="off">
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="bar">
+      <span id="resCount">—</span>
+      <button id="btnClear" class="link">清空筛选</button>
+    </div>
+    <div id="list" class="list"></div>
+  </section>
+
+  <!-- ② 中：法术详情 -->
+  <div class="hv hv-list" title="拖动调整列表宽度"></div>
+  <section class="pane pane-detail" id="detail">
+    <div class="empty">从左边点一个法术，这里显示完整规则</div>
+  </section>
+
+   </div>
+
+   <!-- 职业页：左特性列表 / 中详情（都写在「主要」表里，抓的进备选区） -->
+   <div class="view" id="viewClass" hidden>
+     <section class="pane pane-list">
+       <div class="pane-head">
+         <input id="cfQ" type="search" placeholder="搜索职业特性（名称 / 英文名 / 正文）…" autocomplete="off">
+         <!-- 种族背景页：种族 / 亚种 / 出身在「基本信息」里定，这里只显示 -->
+         <div class="locked-row" id="cfLocked" hidden></div>
+       </div>
+       <div class="filters" id="cfFilters"></div>
+       <div class="bar" id="cfBar">
+         <span id="cfCount">—</span>
+         <button id="cfClear" class="link">清空筛选</button>
+       </div>
+       <div id="cfList" class="list"></div>
+     </section>
+
+     <div class="hv hv-list" title="拖动调整列表宽度"></div>
+     <section class="pane pane-detail" id="cfDetail">
+       <div class="empty">从左边点一条职业特性，这里显示完整规则</div>
+     </section>
+
+   </div>
+
+   <!-- 表单页（基本信息…）：一格一个字段，分组卡片排版；填好的进最右边的备选区 -->
+   <div class="view" id="viewForm" hidden>
+     <div class="form-wrap">
+       <div class="form-head">
+         <div class="form-title" id="fmTitle">—</div>
+         <div class="form-sub" id="fmSub"></div>
+       </div>
+       <!-- 速查（魔法物品页）：规则书里的词条，抓进最右边的备选区，再从那儿写进表 -->
+       <div class="lookup" id="fmLookup" hidden>
+         <div class="lk-head">
+           <input id="lkQ" type="search" placeholder="速查魔法物品（名称 / 英文名 / 正文）…" autocomplete="off">
+           <span class="count" id="lkCount">—</span>
+           <button id="lkClear" class="link">清空筛选</button>
+         </div>
+         <div class="filters" id="lkFilters"></div>
+         <div id="lkList" class="lk-list"></div>
+         <div class="rz rz-e" id="lkResizeE" title="拖动调整宽度"></div>
+         <div class="rz rz-s" id="lkResizeS" title="拖动调整高度"></div>
+       </div>
+       <div class="form-body" id="fmSections"></div>
+     </div>
+   </div>
+
+   <!-- 其它节点：先放空白占位 -->
+   <div class="view" id="viewBlank" hidden>
+     <div class="ph-crumb" id="phCrumb"></div>
+     <div class="ph-title" id="phTitle"></div>
+     <div class="ph-box">
+       <div class="ph-box-mark">空白占位</div>
+       <div class="ph-box-hint" id="phHint"></div>
+     </div>
+   </div>
+  </main>
+
+  <div class="vs" id="splitStage" title="拖动调整备选区宽度"></div>
+
+  <!-- 最右：备选区 —— 跟设计树同级，哪一页都在；
+       填的字段先攒在这里，攒齐了从这儿一并写进表 -->
+  <aside class="stage" id="stage">
+    <div class="pane-head fill-head">
+      <b>备选区</b>
+      <span class="count" id="stageCount">0</span>
+      <span class="badge ok" id="stageBadge">空</span>
+      <button id="stageClear" class="link danger">清空</button>
+    </div>
+    <div id="stageList" class="tray-list"></div>
+    <div class="fill-foot">
+      <div class="target">
+        <div class="target-row">
+          <span class="target-label">目标表格</span>
+          <button id="stageReveal" class="icon" title="在资源管理器中显示">📁</button>
+        </div>
+        <div class="target-name" id="stageTable">—</div>
+        <div class="target-path" id="stagePath"></div>
+        <div class="target-meta" id="stageMeta"></div>
+      </div>
+      <!-- 选表格的三件套跟备选区走：页内没有填入区了，这里就是唯一入口 -->
+      <div class="table-btns">
+        <button id="btnNewTable" title="用空白模板另存一张新表">新建表格</button>
+        <button id="btnOpenTable" title="打开一份已有的人物卡">使用已有表格</button>
+        <button id="btnManual" class="link" title="原生对话框打不开时用">手动选择</button>
+      </div>
+      <button id="stageFill" class="primary big">填入表格</button>
+      <div id="stageMsg" class="msg"></div>
+      <div class="afterBox" id="stageAfter" hidden>
+        <div class="ok-title" id="stageAfterTitle"></div>
+        <div class="after-detail" id="stageAfterDetail"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- 手动选择 / 新建（原生对话框的退路） -->
+<div id="picker" class="modal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <b>选择表格</b>
+      <button id="pkUp" class="link">上一级</button>
+      <button id="pkRoot" class="link">快捷位置</button>
+      <button id="pkClose" class="link danger">关闭</button>
+    </div>
+    <div class="modal-path">
+      <input id="pkPath" spellcheck="false">
+      <button id="pkGo">转到</button>
+    </div>
+    <div id="pkRoots" class="roots"></div>
+    <div id="pkList" class="pk-list"></div>
+    <div class="modal-foot">
+      <span>新建表格：</span>
+      <input id="pkName" placeholder="新人物卡.xlsx" spellcheck="false">
+      <button id="pkCreate" class="primary">用模板新建</button>
+    </div>
+    <div id="pkMsg" class="msg"></div>
+  </div>
+</div>
+
+<script src="app.js?v=11"></script>
+</body>
+</html>
