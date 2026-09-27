@@ -16,7 +16,14 @@ import 'package:archive/archive.dart';
 
 import '../util/text.dart';
 
+/// XML 1.0 只允许 \t \n \r 三个控制字符，其余 U+0000–U+0008 / U+000B / U+000C /
+/// U+000E–U+001F 都是非法的。直接写进去会让整个 sheet 变成不合法的 XML，
+/// Excel 打不开（从网页 / PDF / Word 复制文字时很容易夹带这类不可见字符）。
+final RegExp _xmlIllegal = RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F]');
+
+/// 写进 XML 的文本一律先过这里：先剔掉非法控制字符，再做标记字符转义。
 String xmlEscape(String s) => s
+    .replaceAll(_xmlIllegal, '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')

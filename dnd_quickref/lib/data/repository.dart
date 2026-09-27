@@ -1,7 +1,7 @@
-/// 词条仓库：目前载入法术与职业特性两类，提供检索与筛选。
+/// 词条仓库：载入 dnd-data 里的词条，提供检索与筛选。
 ///
-/// 装备/专长/种族三类还没接页面，数据文件仍在 dnd-data 里，
-/// 需要时把名字加回 [dataFiles] 即可。
+/// 实际加载哪几类看 [dataFiles]；`equipment.json`（装备）数据在但还没接页面，
+/// 需要时把名字加进 [dataFiles] 即可。
 library;
 
 import 'dart:convert';

@@ -5,6 +5,7 @@
 /// 打开/另存为对话框），点「填入表格」就把填入区里的法术写进那张表。
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,6 +13,7 @@ import 'package:dnd_quickref/data/card_lists.dart';
 import 'package:dnd_quickref/data/repository.dart';
 import 'package:dnd_quickref/models/entry.dart';
 import 'package:dnd_quickref/staging/tray.dart';
+import 'package:dnd_quickref/util/text.dart';
 import 'package:dnd_quickref/xlsx/patcher.dart';
 import 'package:path/path.dart' as p;
 
@@ -212,6 +214,11 @@ Future<void> main(List<String> args) async {
       await _handle(req, webDir);
     } on FormatException catch (e) {
       await _json(req, {'error': e.message}, status: 400);
+    } on ArgumentError catch (e) {
+      // 里层抛出来的参数错（最常见的是「工作表不存在」）不该当成 500 内部错误甩给用户
+      await _json(req,
+          {'error': '这张卡里没有要写的那张表：${e.message}。换一张本系列的卡，或者别填这一页。'},
+          status: 400);
     } catch (e, st) {
       stderr.writeln('请求出错 ${req.uri}: $e\n$st');
       try {
@@ -229,9 +236,23 @@ String? _arg(List<String> args, String name) {
   return null;
 }
 
+/// 写表要串行：每个写接口都是「读出整份 xlsx → 改 → 写回」，
+/// 两个请求交错时后写的会把先写的覆盖掉。POST 一律排队执行。
+Future<void> _writeQueue = Future<void>.value();
+
+Future<void> _serializeWrite(Future<void> Function() body) {
+  final next = _writeQueue.then((_) => body());
+  _writeQueue = next.catchError((_) {});
+  return next;
+}
+
 Future<void> _handle(HttpRequest req, String webDir) async {
   if (req.uri.path.startsWith('/api/')) {
-    await _api(req, req.uri);
+    if (req.method == 'POST') {
+      await _serializeWrite(() => _api(req, req.uri));
+    } else {
+      await _api(req, req.uri);
+    }
     return;
   }
   await _static(req, webDir);
@@ -523,13 +544,23 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     try {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
       final plan = planBackgroundEffects(patcher, effects, skillRows: _skillRows);
-      if (plan.writes.isNotEmpty) {
+      // 换出身时先把上一次这个来源写进去的格子还原，免得新旧堆在一起
+      final undo = _planUndo(patcher, 'background');
+      final all = <String, Map<String, String>>{};
+      for (final e in undo.writes.entries) {
+        (all[e.key] ??= {}).addAll(e.value);
+      }
+      for (final e in plan.writes.entries) {
+        (all[e.key] ??= {}).addAll(e.value);
+      }
+      if (all.isNotEmpty) {
         List<int> bytes = await src.readAsBytes();
-        for (final e in plan.writes.entries) {
+        for (final e in all.entries) {
           bytes = XlsxPatcher.open(bytes).writeCells(e.key, e.value);
         }
         await src.writeAsBytes(bytes);
       }
+      await _rememberEffectWrites('background', _effectRecord(patcher, plan.written));
       _tableCacheKey = '';
       _formCacheKey['attrs'] = '';
       return await _json(req, {
@@ -537,7 +568,9 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         'table': target,
         'backup': backup,
         'written': plan.written,
+        'undone': undo.restored,
         'unmapped': plan.unmapped,
+        'note': '卡里靠公式算的格子（例如「背景收益」那几行）不会立刻跟着变，用 Excel 打开一次就会重算。',
       });
     } on FileSystemException catch (e) {
       return _json(req, {'error': '写不进去（这张表可能正在 Excel 里开着，先关掉再试）：${e.message}'},
@@ -575,13 +608,23 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     try {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
       final plan = planClassEffects(patcher, effects, skillRows: _skillRows);
-      if (plan.writes.isNotEmpty) {
+      // 换主职业 / 子职业时同理：先还原上一次这个来源写的格子
+      final undo = _planUndo(patcher, 'class');
+      final all = <String, Map<String, String>>{};
+      for (final e in undo.writes.entries) {
+        (all[e.key] ??= {}).addAll(e.value);
+      }
+      for (final e in plan.writes.entries) {
+        (all[e.key] ??= {}).addAll(e.value);
+      }
+      if (all.isNotEmpty) {
         List<int> bytes = await src.readAsBytes();
-        for (final e in plan.writes.entries) {
+        for (final e in all.entries) {
           bytes = XlsxPatcher.open(bytes).writeCells(e.key, e.value);
         }
         await src.writeAsBytes(bytes);
       }
+      await _rememberEffectWrites('class', _effectRecord(patcher, plan.written));
       _tableCacheKey = '';
       _formCacheKey['attrs'] = '';
       return await _json(req, {
@@ -589,6 +632,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         'table': target,
         'backup': backup,
         'written': plan.written,
+        'undone': undo.restored,
         'auto': plan.auto,
         'unmapped': plan.unmapped,
       });
@@ -747,17 +791,30 @@ Future<void> _api(HttpRequest req, Uri uri) async {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
       final writes = <String, Map<String, String>>{};
       final written = <Map<String, String>>[];
+      final missing = <String>[];
       for (final f in fields) {
         // 只读格（卡自己算的）和行标签列不写
         if (f.kind == 'readonly' || f.kind == 'label') continue;
         final v = (values[f.field] ?? '').trim();
         if (v.isEmpty || f.cell.isEmpty) continue;
+        // 版式不同的卡可能没有这张表（比如老卡没有「起源」），如实报出来而不是写崩
+        if (!patcher.hasSheet(f.sheet)) {
+          final tag = '${f.label}（${f.sheet} 表）';
+          if (!missing.contains(tag)) missing.add(tag);
+          continue;
+        }
         if ((patcher.cellText(f.sheet, f.cell) == v)) continue;
         (writes[f.sheet] ??= {})[f.cell] = v;
         written.add({'field': f.field, 'label': f.label, 'sheet': f.sheet, 'cell': f.cell, 'value': v});
       }
       if (writes.isEmpty) {
-        return await _json(req, {'ok': true, 'writtenCount': 0, 'written': <Object>[], 'table': target});
+        return await _json(req, {
+          'ok': true,
+          'writtenCount': 0,
+          'written': <Object>[],
+          'missing': missing,
+          'table': target,
+        });
       }
       List<int> bytes = await src.readAsBytes();
       for (final e in writes.entries) {
@@ -772,6 +829,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         'backup': backup,
         'writtenCount': written.length,
         'written': written,
+        'missing': missing,
         'form': await _formJson(key, refresh: true),
       });
     } on FileSystemException catch (e) {
@@ -939,12 +997,23 @@ List<String> splitEffectList(String text) {
   const origin = '起源';
   const languageSlots = ['B24', 'H24', 'B25', 'H25', 'B26', 'H26', 'B27', 'H27', 'B28', 'H28'];
   const toolSlots = ['B31', 'H31', 'B32', 'H32'];
+  // 老版式 / 别人的卡可能根本没有「起源」表，先问一下，别等到写的时候抛异常
+  final hasOrigin = p.hasSheet(origin);
 
   final featBlocks = p.hasSheet('专长与据点')
       ? (p.linkedBlocks(sheet: '专长与据点', sourceSheet: kMainSheet, minRun: 3)
         ..sort((a, b) => b.slots.compareTo(a.slots)))
       : <SpellBlock>[];
   final featCells = featBlocks.isEmpty ? const <String>[] : featBlocks.first.cells;
+  // 卡里已经有的专长名，用来查重（原来只看格子空不空，卡里已有的会被再写一遍）
+  final featExisting = <String>{};
+  if (featBlocks.isNotEmpty) {
+    final b = featBlocks.first;
+    for (final v in p.columnValues(kMainSheet, b.column, b.startRow, b.endRow).values) {
+      final t = v.trim();
+      if (t.isNotEmpty) featExisting.add(normalizeKey(t));
+    }
+  }
 
   final writes = <String, Map<String, String>>{};
   final written = <Map<String, String>>[];
@@ -976,6 +1045,10 @@ List<String> splitEffectList(String text) {
         }
       case '工具熟练':
       case '语言':
+        if (!hasOrigin) {
+          unmapped.add('${e.label}：「${origin}」表不存在，这张卡写不了（${e.text}）');
+          continue;
+        }
         final cell = freeIn(origin, e.label == '语言' ? languageSlots : toolSlots);
         if (cell == null) {
           unmapped.add('${e.label}的格子满了，没写：${e.text}');
@@ -986,6 +1059,10 @@ List<String> splitEffectList(String text) {
         final name = splitEffectList(e.text).first
             .replaceAll(RegExp(r'[（(][^）)]*[）)]'), '')
             .trim();
+        if (featExisting.contains(normalizeKey(name))) {
+          unmapped.add('专长「$name」卡里已经有了，跳过');
+          continue;
+        }
         final cell = freeIn(kMainSheet, featCells);
         if (cell == null) {
           unmapped.add('专长列没有空格了，没写：$name');
@@ -1668,7 +1745,7 @@ const _skillRows = <int, String>{
   41: '运动', 43: '特技', 44: '巧手', 45: '隐匿',
   47: '调查', 48: '奥秘', 49: '历史', 50: '自然', 51: '宗教',
   53: '察觉', 54: '洞悉', 55: '驯兽', 56: '医药', 57: '求生',
-  59: '游说', 60: '欺瞒', 61: '威吓',
+  59: '游说', 60: '欺瞒', 61: '威吓', 62: '表演',
 };
 const _attrRows = <int, String>{13: '力量', 14: '敏捷', 15: '体质', 16: '智力', 17: '感知', 18: '魅力'};
 
@@ -1785,8 +1862,9 @@ Future<List<FormField>?> _formFields(String key, String path) async {
     }
 
     final fields = <FormField>[
-      g('name', '角色名', 'text', 'E3'),
-      g('player', '玩家', 'text', 'E4'),
+      // 角色名 / 玩家 已经删掉：卡里「起源」表那两个格子没有任何表引用它们
+      // （真正在用的是 主要!E3 / E4，基本信息页填的就是那儿），
+      // 留在这里只会让人以为填了有用。
       g('hometown', '故乡', 'text', 'E5'),
       // 出身（E6）在「基本信息」里填，这一页不再重复给一个入口
       g('age', '年龄', 'text', 'E8', section: '人物形象'),
@@ -1795,6 +1873,11 @@ Future<List<FormField>?> _formFields(String key, String path) async {
       g('weight', '体重', 'text', 'K9', section: '人物形象'),
       g('bio', '人物形象', 'text', 'B12', section: '人物形象'),
       g('trait', '个性', 'text', 'S11', section: '人物形象'),
+      // 卡里这两块右侧还留着理念 / 羁绊 / 缺陷 / 背景故事四个空格子，一并给上入口
+      g('ideal', '理念', 'text', 'S13', section: '人物形象'),
+      g('bond', '羁绊', 'text', 'S14', section: '人物形象'),
+      g('flaw', '缺陷', 'text', 'S15', section: '人物形象'),
+      g('story', '背景故事', 'text', 'S17', section: '人物形象'),
       // 卡按背景反查出来的收益，只读
       g('ability', '属性值', 'readonly', 'S4', section: '背景收益'),
       g('skills', '技能熟练', 'readonly', 'S5', section: '背景收益'),
@@ -1905,6 +1988,8 @@ Future<List<FormField>?> _formFields(String key, String path) async {
     // 武器 / 护甲 / 盾 的「含同调」那几行：名字 + 同调都在这页管，跟卡里的块一一对应
     final weaponNames = CardLists.weaponsFrom(patcher);
     final armors = _armorNames(patcher);
+    // 奇物名的候选：词条库里的 307 条魔法物品（跟上面那个「魔法物品速查」同一份数据）
+    final curios = repo.ofType('magicItem').map((e) => e.name).toList()..sort();
     for (var r = 32; r <= 36; r++) {
       final row = '第 ${r - 31} 件';
       fields.add(m('武器名', 'text', 'B$r', section: '武器（含同调）', row: row, col: 0,
@@ -1929,7 +2014,7 @@ Future<List<FormField>?> _formFields(String key, String path) async {
         options: dressOpts));
     for (var r = 42; r <= 51; r++) {
       final row = '第 ${r - 41} 件';
-      fields.add(m('奇物名', 'text', 'L$r', row: row, col: 0));
+      fields.add(m('奇物名', 'text', 'L$r', row: row, col: 0, options: curios));
       fields.add(m('同调', 'toggle', 'P$r', row: row, col: 1,
           options: attuneOpts));
       fields.add(m('稀有度', 'select', 'R$r', row: row, col: 2, options: rarity));
@@ -2154,9 +2239,72 @@ Future<String?> _backup(String path) async {
 // ---------------------------------------------------------------- 配置
 File get _configFile => File(p.join(kAppRoot, '.quickref.json'));
 
+/// 整个 .quickref.json 的内容。除了记住的表格，还存「上次从出身 / 职业效果写过哪些格」，
+/// 好让换出身时能把上一次写进去的东西还原回去。
+Map<String, dynamic> _cfg = {};
+
+/// 上一次从某个来源（`background` / `class`）写进这张表的格子。
+/// 每条记着：写到哪一格、写的是什么、写之前那一格是什么。
+List<Map<String, String>> _lastEffectWrites(String source) {
+  final all = _cfg['effectWrites'];
+  if (all is! Map) return const [];
+  final list = all['${p.normalize(kTable).toLowerCase()}|$source'];
+  if (list is! List) return const [];
+  final out = <Map<String, String>>[];
+  for (final x in list) {
+    if (x is! Map) continue;
+    out.add({
+      'sheet': (x['sheet'] ?? '').toString(),
+      'cell': (x['cell'] ?? '').toString(),
+      'value': (x['value'] ?? '').toString(),
+      'old': (x['old'] ?? '').toString(),
+    });
+  }
+  return out;
+}
+
+Future<void> _rememberEffectWrites(String source, List<Map<String, String>> rows) async {
+  final all = <String, dynamic>{};
+  final prev = _cfg['effectWrites'];
+  if (prev is Map) for (final e in prev.entries) all[e.key.toString()] = e.value;
+  all['${p.normalize(kTable).toLowerCase()}|$source'] = rows;
+  _cfg['effectWrites'] = all;
+  await _saveConfig();
+}
+
+/// 换出身 / 换职业时，先把上一次同一来源写进去的格子还原。
+/// 只还原「现在的内容还等于我们上次写的那个值」的格子——用户后来自己改过的就不动。
+({Map<String, Map<String, String>> writes, List<String> restored}) _planUndo(
+    XlsxPatcher p, String source) {
+  final writes = <String, Map<String, String>>{};
+  final restored = <String>[];
+  for (final r in _lastEffectWrites(source)) {
+    final sheet = r['sheet'] ?? '';
+    final cell = r['cell'] ?? '';
+    if (sheet.isEmpty || cell.isEmpty) continue;
+    if (!p.hasSheet(sheet)) continue;
+    if (p.cellText(sheet, cell).trim() != (r['value'] ?? '').trim()) continue;
+    (writes[sheet] ??= {})[cell] = r['old'] ?? '';
+    restored.add('$sheet!$cell');
+  }
+  return (writes: writes, restored: restored);
+}
+
+/// 把这次的写入记成「下次要撤销的清单」（连同写入前每一格的旧值）
+List<Map<String, String>> _effectRecord(XlsxPatcher p, List<Map<String, String>> written) => [
+      for (final e in written)
+        {
+          'sheet': e['sheet'] ?? '',
+          'cell': e['cell'] ?? '',
+          'value': e['value'] ?? '',
+          'old': p.cellText(e['sheet'] ?? '', e['cell'] ?? ''),
+        },
+    ];
+
 Future<void> _saveConfig() async {
   try {
-    await _configFile.writeAsString(jsonEncode({'table': kTable}));
+    _cfg['table'] = kTable;
+    await _configFile.writeAsString(jsonEncode(_cfg));
   } catch (_) {}
 }
 
@@ -2164,6 +2312,7 @@ Future<String?> _loadConfig() async {
   try {
     if (!await _configFile.exists()) return null;
     final j = jsonDecode(await _configFile.readAsString());
+    if (j is Map) _cfg = j.cast<String, dynamic>();
     final t = (j is Map ? (j['table'] ?? j['card']) : null)?.toString();
     if (t != null && t.isNotEmpty && await File(t).exists()) return t;
   } catch (_) {}

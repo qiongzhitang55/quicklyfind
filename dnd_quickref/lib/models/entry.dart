@@ -5,7 +5,7 @@ import '../util/text.dart';
 
 class Entry {
   final String id;
-  final String type; // spell / equipment / feat / species / classFeature
+  final String type; // spell / classFeature / feat / species / magicItem / equipment
   final String name;
   final String en;
   final String category;

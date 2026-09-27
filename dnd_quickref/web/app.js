@@ -733,7 +733,8 @@ function parseClassFeatures(text) {
     }
     cur.text += (cur.text ? '\n' : '') + line;
   }
-  return out;
+  // 书里的章节标题也长成「3级：野蛮人子职 Barbarian Subclass」，别把它当成一条特性
+  return out.filter((f) => !/子职|Subclass/i.test(f.name));
 }
 
 /// 「选择2项：特技、驯兽、运动」这种菜单拆开；`任选3项` 没列候选就返回空
@@ -747,7 +748,25 @@ function classMenu(text) {
       if (t && names.indexOf(t) < 0) names.push(t);
     }
   }
-  return { pick: +m[2], names };
+  // 「任选3项乐器」这种后面只跟了个名词，凑不出候选，当成"没有候选"
+  return { pick: +m[2], names: names.length > 1 ? names : [] };
+}
+
+/// 卡里的技能清单（给「任选N项」这种书里没列候选的菜单兜底用）
+let cardSkills = null;
+async function loadCardSkills() {
+  if (cardSkills) return cardSkills;
+  try {
+    const f = await api('/api/form?key=basic');
+    const names = [];
+    for (const s of (f.sections || [])) {
+      for (const x of (s.fields || [])) {
+        if (x.label === '技能' && x.value) names.push(x.value);
+      }
+    }
+    cardSkills = names;
+  } catch (e) { cardSkills = []; }
+  return cardSkills;
 }
 
 /// 「选择2项：…」「任选3项乐器」这种整条就是一串选项的
@@ -763,8 +782,10 @@ function isMenuLine(text) {
 function classItemKind(e) {
   if (e.label === '技能熟练') {
     const menu = classMenu(e.text);
-    if (menu && menu.names.length > menu.pick) return 'menu';
-    if (isMenuLine(e.text)) return 'panel';       // 「任选3项」这种没列候选的，整条进面板
+    if (!menu) return 'pick';
+    // 有候选名单的正常当菜单；「任选3项」这种书里没列候选的，
+    // 现在也用卡里的技能表兜底了，所以同样给勾选框
+    if (menu.names.length > menu.pick || menu.names.length === 0) return 'menu';
     return 'pick';
   }
   if (e.label === '工具熟练' || e.label === '语言') return isMenuLine(e.text) ? 'panel' : 'pick';
@@ -796,6 +817,10 @@ function ruleQuery(kind, cls, name) {
 async function renderClassList() {
   const list = $('cfList');
   const ctx = classCtx();
+  // 记住当前选中哪一条：勾一个技能会重画列表，别把详情面板弹回第一条
+  const keepEl = document.querySelector('#cfList .item.on');
+  const keep = keepEl ? keepEl.dataset.i : null;
+  await loadCardSkills();
   $('cfLocked').innerHTML = lockedLine('主职业', ctx.cls) + lockedLine('子职业', ctx.sub) + lockedLine('等级', ctx.level);
   const say = (html) => {
     $('cfCount').textContent = '—';
@@ -840,7 +865,7 @@ async function renderClassList() {
       showClassItem(i);
     };
   });
-  showClassItem('0');
+  showClassItem(keep != null ? keep : '0');
 }
 
 function ruleQuery0(kind, cls, name) {
@@ -884,10 +909,14 @@ function showClassItem(i) {
     pick: '点右边的「+」抓进备选区，再从备选区一并写进表。',
     menu: '勾中你要的那几项，勾中的会一条条进备选区（写表时在技能表上打熟练）；「+」是把这一整条写进卡片「职业能力」面板那一行。',
   }[kind];
-  const menu = kind === 'menu' ? classMenu(e.text) : null;
+  const base = kind === 'menu' ? classMenu(e.text) : null;
+  // 书里只写「任选3项」、没把候选列出来的（吟游诗人的技能熟练就是）：用卡里的技能表兜底
+  const menu = base && base.pick > 0 && base.names.length === 0 && e.label.indexOf('技能') >= 0
+    ? { pick: base.pick, names: (cardSkills || []).slice() }
+    : base;
   const picker = menu
     ? `<div class="cf-pick">${menu.names.map((n) => `
-        <label class="chk"><input type="checkbox" data-skill="${esc(n)}" ${effectStaged({ label: '技能熟练', text: n }, 'class') ? 'checked' : ''}>
+        <label class="chk"><input type="checkbox" data-skill="${esc(n)}" ${effectStaged({ label: e.label, text: n }, 'class') ? 'checked' : ''}>
         <span>${esc(n)}</span></label>`).join('')}
       </div>`
     : '';
@@ -899,9 +928,23 @@ function showClassItem(i) {
     ${meta}`;
   [...$('cfDetail').querySelectorAll('input[data-skill]')].forEach((el) => {
     el.onchange = () => {
-      const eff = { label: '技能熟练', text: el.dataset.skill };
-      if (el.checked) addStageEffect(eff, 'class', '职业', false);
-      else { dropStageEffect(eff, 'class'); renderClassList().catch(() => {}); }
+      // 标签跟着这一条走：技能熟练 / 工具熟练 / 语言 各写各的落点
+      const eff = { label: e.label, text: el.dataset.skill };
+      if (el.checked) {
+        // 「选择2项」这类菜单是有上限的：勾过头就把这一次撤回来，别写进备选区
+        const need = menu ? menu.pick : 0;
+        const picked = [...$('cfDetail').querySelectorAll('input[data-skill]')]
+          .filter((b) => b.checked).length;
+        if (need > 0 && picked > need) {
+          el.checked = false;
+          msg(`「${e.label}」只能选 ${need} 项，先取消一个再勾`, 'err');
+          return;
+        }
+        addStageEffect(eff, 'class', '职业', false);
+      } else {
+        dropStageEffect(eff, 'class');
+        renderClassList().catch(() => {});
+      }
     };
   });
 }
@@ -1384,6 +1427,7 @@ async function fillStage() {
       const r = await post('/api/form/fill', { key, values });
       count += r.writtenCount || 0;
       (r.written || []).forEach((w) => lines.push(`${w.label}：${w.cell} = ${w.value}`));
+      (r.missing || []).forEach((m) => lines.push('· 这张卡里没有这张表，没写：' + m));
       if (r.backup) backup = r.backup;
       if (key === formState.key && r.form) formState.info = r.form;
     }
@@ -1417,11 +1461,15 @@ async function fillStage() {
       count += (r.written || []).length;
       (r.written || []).forEach((w) => lines.push(`${w.label}：${w.sheet}!${w.cell} = ${w.value}`));
       (r.auto || []).forEach((a) => lines.push('· 卡里自己算：' + a));
+      (r.undone || []).forEach((u) => lines.push('· 已还原上一次写进去的：' + u));
       (r.unmapped || []).forEach((u) => lines.push('· 没写的：' + u));
+      if (r.note) lines.push('· ' + r.note);
       if (r.backup) backup = r.backup;
     }
     stageState.items = [];
-    renderForm();
+    // 写完必须重新问服务端要一份再画：renderForm() 用的是写入前拉到的那份数据，
+    // 页面会停在旧值上（看着像"没写进去"）。
+    if (formState.info) await loadForm(true);
     // 写完之后，只读页上那句「还没写进表」要跟着消失
     if (cf.info && cf.info.locked) {
       await loadPageInfo();
@@ -1572,7 +1620,8 @@ function comboPick(box, value) {
   comboClose(box);
   input.focus();
   if (old !== value) {
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    // 只发 change。input 事件会被输入框自己的 comboFilter 接住，
+    // 把候选列表筛成"只剩刚选的那一项"，下次就什么都点不到了。
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
@@ -1612,7 +1661,13 @@ document.addEventListener('mousedown', (ev) => {
   if (comboOpen && !(ev.target.closest && ev.target.closest('.combo'))) comboClose(comboOpen);
 });
 window.addEventListener('resize', () => comboClose(comboOpen));
-document.addEventListener('scroll', () => comboClose(comboOpen), true);
+document.addEventListener('scroll', (ev) => {
+  if (!comboOpen) return;
+  // 候选列表自己滚动（滚轮 / 拖滚动条）不该把下拉关掉——只有别的地方滚才关
+  const t = ev.target;
+  if (t && t.closest && t.closest('.combo') === comboOpen) return;
+  comboClose(comboOpen);
+}, true);
 
 function fieldHtml(f, inTable) {
   if (f.kind === 'label') return `<span class="fname">${esc(f.value || f.label)}</span>`;
@@ -1632,12 +1687,22 @@ function fieldHtml(f, inTable) {
         emptyLabel: '·', title: `${f.label} ${f.cell}`, narrow: true,
       });
     }
+    if (f.options && f.options.length) {
+      // 能自己打字、但也有候选（武器名 / 护甲名那种）→ 照样给下拉，别把候选丢了
+      return comboHtml({
+        field: f.field, value: f.value, options: f.options, editable: true,
+        type: f.kind === 'number' ? 'number' : 'text',
+        title: `${f.label} ${f.cell}`, narrow: true,
+      });
+    }
     return `<input data-field="${esc(f.field)}" value="${esc(f.value)}" ${t}
       ${f.kind === 'number' ? 'type="number"' : 'type="text"'} spellcheck="false">`;
   }
   const id = 'fm_' + f.field;
   const cls = 'ffield' + (f.cell ? '' : ' miss');
-  const hint = `<i class="fcell">${esc(f.cell || '未识别')}</i>`;
+  // detected=false：这一格没从卡里认出来，用的是兜底位置，标一下免得用户以为它是准的
+  const guess = f.detected === false;
+  const hint = `<i class="fcell"${guess ? ' title="这一格没从卡里认出来，是兜底位置，可能不对"' : ''}>${esc(f.cell || '未识别')}${guess ? ' ⚠' : ''}</i>`;
   if (asSelect(f)) {
     return `<label class="${cls}"><span class="flabel">${esc(f.label)}${hint}</span>
       ${comboHtml({ id, field: f.field, value: f.value, options: f.options })}</label>`;
@@ -1652,8 +1717,9 @@ function fieldHtml(f, inTable) {
       ${f.kind === 'number' ? 'type="number" min="0"' : 'type="text"'} spellcheck="false"></label>`;
 }
 
-/// 要不要渲染成下拉框：选项不多就走 <select>；跟别的字段联动的（子职业 / 亚种）
-/// 也走 <select>，这样父字段一改就能就地换掉整份选项。
+/// 要不要渲染成「只读下拉」（只能从列表里挑，不能自己打字）：
+/// 选项不多、或者跟别的字段联动的（子职业跟主职业、亚种跟种族）。
+/// 注：现在控件一律是页面自绘的 .combo，已经没有原生 <select> 了。
 function asSelect(f) {
   if (f.kind !== 'select') return false;
   if (f.parent) return true;
@@ -1956,8 +2022,10 @@ $('stageList').addEventListener('click', (ev) => {
   const btn = ev.target.closest('[data-del]');
   if (!btn) return;
   const row = btn.closest('.trow');
+  if (!row) return;
   const key = row.dataset.key;
-  const del = row.dataset.del;
+  // data-del 挂在按钮上，不是挂在行上（行上只有 data-id / data-field）
+  const del = btn.dataset.del;
   if (row.dataset.kind === 'effect') {
     stageState.items = stageState.items
       .filter((e) => !(e.kind === 'effect' && e.label === del && e.formKey === key));
