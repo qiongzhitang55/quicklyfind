@@ -213,7 +213,24 @@ if ($NoZip) {
         Move-Item -LiteralPath $zipPath -Destination $bak
         Say "   old zip kept as $bak"
     }
-    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    # Build the entries by hand so the names always use "/".
+    # Compress-Archive writes "\" under Windows PowerShell 5.1, and
+    # ZipFile.CreateFromDirectory does the same under .NET Framework -- some
+    # unzip tools then create a file literally called "web\app.js" instead of a
+    # web\ folder. Explicit "/" names work everywhere (including the tar that
+    # ships with Windows 10+).
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
+    try {
+        foreach ($f in (Get-ChildItem -LiteralPath $stage -Recurse -File)) {
+            $rel = $f.FullName.Substring($stage.Length + 1).Replace('\', '/')
+            [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $zip, $f.FullName, $rel,
+                [System.IO.Compression.CompressionLevel]::Optimal)
+        }
+    } finally {
+        $zip.Dispose()
+    }
 }
 
 $files = Get-ChildItem -LiteralPath $stage -Recurse -File
