@@ -357,6 +357,54 @@ async function loadTable(refresh) {
   loadProgress().catch(() => {});
 }
 
+/// 把「当前这张卡」从工作区里彻底拿出去：备选区、表单、各页缓存、卡内技能清单全清掉。
+///
+/// 换卡 / 初始化 / 读卡之前都必须先做这一步，否则上一张卡的东西会串进来
+/// （最典型的：备选区里还留着上一张卡挑的词条，一填就写进新卡）。
+function unloadCardState() {
+  stageState.items = [];          // 备选区
+  state.current = null;
+  formState.info = null;          // 表单数据
+  formState.loaded = false;
+  for (const k of Object.keys(pageStates)) pageStates[k].info = null;
+  lkState.items = [];             // 魔法物品速查
+  lkState.loaded = false;
+  cardSkills = null;              // 卡里的技能清单
+  cf = null;                      // 当前词条页的状态
+  renderStage();
+}
+
+/// 换卡：先把上一张卡拿出去，再挂上新卡重新读一遍
+async function afterTableChange(t, note) {
+  unloadCardState();              // 1) 先把上一张卡从工作区拿出去
+  state.table = t || state.table; // 2) 再挂上新卡
+  await loadTable(true);          // 3) 读新卡（loadTable 里会连带 renderStage 和进度条）
+  renderTree();
+  await reloadCurrentView();      // 4) 当前这一页对着新卡重读
+  msg(note || '已换卡', 'ok');
+}
+
+/// 当前显示的是哪一页，就把它重新读一遍（换卡后调用）
+async function reloadCurrentView() {
+  try {
+    if (!$('viewForm').hidden) {
+      await loadForm(true);
+      return;
+    }
+    if (!$('viewClass').hidden) {
+      await loadPageInfo();
+      if (activePage === 'background') await renderBackgroundList();
+      else if (activePage === 'classlevel') await renderLevelList();
+      else if (activePage === 'classinfo') await renderClassList();
+      else await cfSearch();
+      return;
+    }
+    await search();
+  } catch (e) {
+    msg('刷新当前页失败：' + e.message, 'err');
+  }
+}
+
 async function tableOp(kind) {
   const t = state.table || {};
   const dir = (t.path || '').replace(/[\\/][^\\/]*$/, '');
@@ -365,11 +413,7 @@ async function tableOp(kind) {
   try {
     const r = await post(kind === 'new' ? '/api/table/new' : '/api/table/open', { dir, name: kind === 'new' ? '新人物卡.xlsx' : t.name });
     if (r.cancelled) { say('已取消'); return; }
-    state.table = r.table;
-    renderStage();
-    say(kind === 'new' ? '已新建表格' : '已切换目标表格', 'ok');
-    for (const k of Object.keys(pageStates)) pageStates[k].info = null;
-    if (!$('viewClass').hidden) loadPageInfo().catch(() => {});
+    await afterTableChange(r.table, kind === 'new' ? '已新建表格（备选区已清空）' : '已切换目标表格（备选区已清空）');
   } catch (e) {
     say('操作失败：' + e.message + '\n（可以点「手动选择」用内置的文件浏览挑表）', 'err');
   }
@@ -403,7 +447,7 @@ async function browse(dir) {
     }).join('');
     [...$('pkRoots').querySelectorAll('button')].forEach((b) => { b.onclick = () => browse(b.dataset.dir); });
     if (!r.exists) {
-      $('pkList').innerHTML = '<div class="empty">目录不存在</div>';
+      $('pkList').innerHTML = `<div class="empty">${esc(r.error || '目录不存在')}</div>`;
       return;
     }
     $('pkList').innerHTML = (r.entries || []).map((e) => `
@@ -426,12 +470,8 @@ async function browse(dir) {
 async function useTable(path) {
   try {
     const r = await post('/api/table/use', { path });
-    state.table = r.table;
-    renderStage();
     $('picker').hidden = true;
-    msg('已切换目标表格：' + r.table.name, 'ok');
-    for (const k of Object.keys(pageStates)) pageStates[k].info = null;
-    if (!$('viewClass').hidden) loadPageInfo().catch(() => {});
+    await afterTableChange(r.table, '已切换目标表格：' + r.table.name + '（备选区已清空）');
   } catch (e) {
     $('pkMsg').textContent = e.message;
   }
@@ -441,12 +481,8 @@ async function createTable() {
   const name = $('pkName').value.trim() || '新人物卡.xlsx';
   try {
     const r = await post('/api/table/create', { dir: pkDir, name });
-    state.table = r.table;
-    renderStage();
     $('picker').hidden = true;
-    msg('已新建表格：' + r.table.name, 'ok');
-    for (const k of Object.keys(pageStates)) pageStates[k].info = null;
-    if (!$('viewClass').hidden) loadPageInfo().catch(() => {});
+    await afterTableChange(r.table, '已新建表格：' + r.table.name + '（备选区已清空）');
   } catch (e) {
     $('pkMsg').textContent = e.message;
   }
@@ -1931,6 +1967,8 @@ function selectNode(id) {
     $('viewForm').hidden = true;
     $('viewClass').hidden = true;
     $('viewBlank').hidden = true;
+    // 列表上的「已在备选区」是按当时的备选区算出来的，回来时重画一次才准
+    search().catch(() => {});
   } else if (node.view === 'form') {
     $('viewSpell').hidden = true;
     $('viewClass').hidden = true;
@@ -1989,6 +2027,120 @@ $('lkClear').onclick = () => {
 $('btnNewTable').onclick = () => tableOp('new');
 $('btnOpenTable').onclick = () => tableOp('open');
 $('btnManual').onclick = () => openPicker();
+
+// ---------------------------------------------------------------- 确认框
+// 危险操作（比如初始化这张卡）先问一句。不用原生 confirm：桌面版外壳里弹不出来。
+let confirmAction = null;
+function askConfirm(title, text, onYes) {
+  $('confirmTitle').textContent = title;
+  $('confirmText').textContent = text;
+  confirmAction = onYes;
+  $('confirm').hidden = false;
+}
+function closeConfirm() {
+  $('confirm').hidden = true;
+  confirmAction = null;
+}
+$('confirmNo').onclick = closeConfirm;
+$('confirmYes').onclick = async () => {
+  const fn = confirmAction;
+  closeConfirm();
+  if (fn) await fn();
+};
+
+// ---------------------------------------------------------------- 初始化这张卡
+async function doResetCard() {
+  // 先清空工作区，再动卡——别让上一张卡留在备选区里的东西掺和进来
+  unloadCardState();
+  msg('正在初始化…');
+  try {
+    const r = await post('/api/card/reset', {});
+    const lines = [
+      '已初始化：字段 ' + (r.fields || 0) + ' 格清空、熟练 ' + (r.skills || 0) + ' 格打 X、' +
+        '是否 ' + (r.yesNo || 0) + ' 格打「否」、词条 ' + (r.entries || 0) + ' 格清空',
+    ];
+    if (r.keptFormula) lines.push('· 公式格 ' + r.keptFormula + ' 个没动');
+    if (r.kept && r.kept.length) {
+      lines.push('· 有 ' + r.kept.length + ' 格认不出是词条，没动：' + r.kept.slice(0, 5).join('、'));
+    }
+    if (r.backup) lines.push('· 写入前的备份：' + r.backup);
+    // 一次改了一大片格子，所有按卡缓存的东西都要重来
+    await afterTableChange(state.table, lines.join('\n'));
+  } catch (e) {
+    msg('初始化失败：' + e.message, 'err');
+  }
+}
+
+$('btnResetCard').onclick = () => {
+  const t = state.table || {};
+  if (!t.exists) {
+    msg('还没有目标表格，先新建或选一张', 'err');
+    return;
+  }
+  askConfirm('初始化这张卡',
+    '目标：' + (t.name || '') + '\n\n' +
+    '会把这张卡清成空卡：\n' +
+    '· 所有填过的字段清空：角色名 / 种族 / 职业 / 等级 / 属性值 / 人物形象 / 装备名…\n' +
+    '· 所有「熟练」格打 X（卡里的约定：X = 无熟练、O = 有熟练）\n' +
+    '· 所有「是 / 否」格打「否」\n' +
+    '· 所有词条清空：法术 / 职业特性 / 种族特性 / 专长 / 魔法物品\n' +
+    '· 起源表里的工具熟练、语言也清掉\n\n' +
+    '备选区会先清空；卡里的公式和结构行（比如职业能力面板那几行）不动。\n' +
+    '写入前会自动备份一份。',
+    doResetCard);
+};
+
+// ---------------------------------------------------------------- 读卡
+/// 读卡 = 用「这张卡里现有的内容」**替换**备选区，再让页面把「已在备选区」反映出来。
+/// 所以先把上一张卡的东西清出去，读进来的就是干净的这一张卡。
+async function doReadCard() {
+  unloadCardState();
+  msg('正在读卡…');
+  try {
+    const r = await api('/api/card');
+    for (const f of (r.fields || [])) {
+      stageState.items.push({
+        kind: 'field', formKey: f.formKey, page: f.page,
+        field: f.field, label: f.label, section: f.section, cell: f.cell, value: f.value,
+      });
+    }
+    for (const e of (r.entries || [])) {
+      stageState.items.push({
+        kind: 'entry', formKey: e.formKey, page: e.page,
+        id: e.id, name: e.name, subtitle: e.subtitle || '',
+      });
+    }
+    renderStage();
+    // 让页面上的「已在备选区」标记也跟着反映出来
+    if (!$('viewForm').hidden) renderForm();
+    if (!$('viewSpell').hidden) search().catch(() => {});
+    if (!$('viewClass').hidden) {
+      if (activePage === 'classinfo') renderClassList().catch(() => {});
+      else if (activePage === 'classlevel') renderLevelList().catch(() => {});
+      else if (activePage === 'background') renderBackgroundList().catch(() => {});
+      else cfSearch().catch(() => {});
+    }
+    msg('已读卡：' + (r.fields || []).length + ' 个字段、' + (r.entries || []).length +
+        ' 条词条，都放进备选区了', 'ok');
+  } catch (e) {
+    msg('读卡失败：' + e.message, 'err');
+  }
+}
+
+$('btnReadCard').onclick = () => {
+  const t = state.table || {};
+  if (!t.exists) {
+    msg('还没有目标表格，先新建或选一张', 'err');
+    return;
+  }
+  if (stageState.items.length) {
+    askConfirm('读卡',
+      '备选区里现在有 ' + stageState.items.length + ' 项，读卡会把它们换成这张卡里的内容。\n继续？',
+      doReadCard);
+    return;
+  }
+  doReadCard();
+};
 
 // ---- 职业页 ----
 $('cfQ').addEventListener('input', (e) => {
@@ -2061,9 +2213,11 @@ $('stageReveal').onclick = () => {
   if (t) reveal(t.replace(/[\\/][^\\/]*$/, ''), true);
 };
 $('picker').addEventListener('click', (e) => { if (e.target === $('picker')) $('picker').hidden = true; });
+$('confirm').addEventListener('click', (e) => { if (e.target === $('confirm')) closeConfirm(); });
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('q').focus(); $('q').select(); }
   if (e.key === 'Escape' && !$('picker').hidden) $('picker').hidden = true;
+  if (e.key === 'Escape' && !$('confirm').hidden) closeConfirm();
 });
 
 (async function init() {

@@ -708,3 +708,5 @@ button.icon { padding: 3px 7px; background: none; border-color: transparent; }
 .pk-row .meta { font-size: 11px; color: var(--dim); }
 .modal-foot { display: flex; gap: 8px; align-items: center; }
 .modal-foot input { flex: 1; }
+.confirm-box { width: min(540px, 92vw); }
+.confirm-text { white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: var(--fg); }

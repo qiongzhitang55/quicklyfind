@@ -336,6 +336,12 @@ class XlsxPatcher {
     return out;
   }
 
+  /// 这张表里所有「含公式」的格子（ref 集合）。
+  /// 批量写（比如「初始化」清空一张卡）之前用它挡一下，别把卡里的公式覆盖掉。
+  Set<String> formulaRefs(String sheet) => {
+        for (final c in scanCells(sheetXml(sheet))) if (c.hasFormula) c.ref,
+      };
+
   /// 某一列里所有非空文本值（不限行范围）
   List<String> columnAll(String sheet, String column) {
     final out = <String>[];

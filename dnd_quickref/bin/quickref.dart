@@ -684,6 +684,237 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     return _json(req, {'ok': true, 'table': await _tableJson(refresh: true)});
   }
 
+  // 把这张卡初始化成空卡：
+  //   · 所有可填字段清空
+  //   · 「熟练」这类 X/O 格 → X（卡里的约定：X=无熟练 O=有熟练）
+  //   · 「是/否」格 → 否
+  //   · 模板里带默认值的选择格（出身 = 自定义背景）恢复成模板的值
+  //   · 词条列清空
+  // 公式格、以及卡自己的结构行（职业能力面板那几行标签等）都不碰。
+  if (path == '/api/card/reset' && req.method == 'POST') {
+    final target = p.normalize(kTable);
+    final src = File(target);
+    if (!await src.exists()) {
+      return _json(req, {'error': '目标表格不存在：$target（先在下面新建或选一张）'}, status: 400);
+    }
+    String? backup;
+    if (!_createdThisSession.contains(target)) {
+      try {
+        backup = await _backup(target);
+      } catch (e) {
+        return _json(req, {'error': '备份失败，为安全起见没有写入：$e'}, status: 500);
+      }
+    }
+    try {
+      final patcher = XlsxPatcher.open(await src.readAsBytes());
+      // 空白模板：用来知道"卡自己的默认值"（比如出身那一格填的是「自定义背景」）
+      XlsxPatcher? tpl;
+      try {
+        final tplFile = File(kTemplatePath);
+        if (await tplFile.exists()) tpl = XlsxPatcher.open(await tplFile.readAsBytes());
+      } catch (_) {}
+      final writes = <String, Map<String, String>>{};
+      final formulaCache = <String, Set<String>>{};
+      Set<String> fx(String s) => formulaCache[s] ??= patcher.formulaRefs(s);
+      final kept = <String>[];   // 看着像内容、但认不出是词条，没动的格子
+      var skillCount = 0, yesNoCount = 0, fieldCount = 0, entryCount = 0, formulaCount = 0;
+
+      void put(String sheet, String cell, String value) {
+        if (cell.isEmpty || !patcher.hasSheet(sheet)) return;
+        if (fx(sheet).contains(cell)) {
+          formulaCount++;
+          return;
+        }
+        (writes[sheet] ??= {})[cell] = value;
+      }
+
+      // 1) 所有可填字段清空；熟练打 X、是/否打「否」、选择格用模板的默认值
+      for (final key in ['basic', 'origin', 'gear', 'magic']) {
+        for (final f in await _formFields(key, target) ?? const <FormField>[]) {
+          if (f.kind == 'readonly' || f.kind == 'label') continue;
+          if (f.cell.isEmpty) continue;
+          final old = f.value.trim();
+          if (old.isEmpty) continue;
+          var next = '';
+          if (f.kind == 'toggle' && f.options.contains('X') && f.options.contains('O')) {
+            next = 'X';
+          } else if (f.kind == 'toggle' && f.options.contains('是') && f.options.contains('否')) {
+            next = '否';
+          } else if (f.kind == 'select' && tpl != null) {
+            final tv = tpl.cellText(f.sheet, f.cell).trim();
+            if (tv.isNotEmpty && tv != '§formula§') next = tv;
+          }
+          if (next == old) continue;
+          put(f.sheet, f.cell, next);
+          if (next == 'X') skillCount++;
+          else if (next == '否') yesNoCount++;
+          else fieldCount++;
+        }
+      }
+
+      // 2) 词条列 → 空。只清「内容能在对应词条库里找到」的格子，
+      //    这样不会把卡里的结构行（职业能力面板那 6 行标签等）当成词条擦掉。
+      //    另外以模板为准：模板里每个词条列开头那几格是卡自己的结构（标签 / 卡算出来的
+      //    行标题），一律不碰。
+      final headLen = tpl == null ? <String, int>{} : _templateHeadLen(tpl);
+      final dicts = <String, Set<String>>{
+        'class': {for (final e in repo.ofType('classFeature')) normalizeKey(e.name)},
+        'species': {for (final e in repo.ofType('species')) normalizeKey(e.name)},
+        'feat': {for (final e in repo.ofType('feat')) normalizeKey(e.name)},
+        'magic': {for (final e in repo.ofType('magicItem')) normalizeKey(e.name)},
+      };
+      for (final key in ['class', 'species', 'feat', 'magic']) {
+        final plan = await _pagePlan(key, target, refresh: true);
+        if (plan == null) continue;
+        final allow = dicts[key] ?? const <String>{};
+        final skip = headLen[key] ?? 0;
+        for (final b in plan.blocks) {
+          for (var i = 0; i < b.cells.length; i++) {
+            if (i < skip) continue;   // 卡自己的结构行，不清
+            final c = b.cells[i];
+            final v = patcher.cellText(plan.sheet, c).trim();
+            if (v.isEmpty) continue;
+            if (allow.contains(normalizeKey(v))) {
+              put(plan.sheet, c, '');
+              entryCount++;
+            }
+            else if (kept.length < 20) kept.add('${plan.sheet}!$c = $v');
+          }
+        }
+      }
+      // 法术位：拿卡自己的「法术大全」当名单，清掉认得出来的法术名
+      final info = await _tableInfo(target, refresh: true);
+      if (info != null) {
+        final spellDict = {for (final n in patcher.spellDictionary()) normalizeKey(n)};
+        for (final b in info.blocks) {
+          for (final c in b.cells) {
+            final v = patcher.cellText('法术书', c).trim();
+            if (v.isEmpty) continue;
+            if (spellDict.contains(normalizeKey(v))) { put('法术书', c, ''); entryCount++; }
+            else if (kept.length < 20) kept.add('法术书!$c = $v');
+          }
+        }
+      }
+      // 起源表里的工具 / 语言那几格
+      for (final c in const ['B24', 'H24', 'B25', 'H25', 'B26', 'H26', 'B27', 'H27',
+                             'B28', 'H28', 'B31', 'H31', 'B32', 'H32']) {
+        if (patcher.hasSheet('起源') && patcher.cellText('起源', c).trim().isNotEmpty) {
+          put('起源', c, '');
+          entryCount++;
+        }
+      }
+
+      if (writes.isNotEmpty) {
+        List<int> bytes = await src.readAsBytes();
+        for (final e in writes.entries) {
+          bytes = XlsxPatcher.open(bytes).writeCells(e.key, e.value);
+        }
+        await src.writeAsBytes(bytes);
+      }
+      _dropTableCaches();
+      return await _json(req, {
+        'ok': true,
+        'table': target,
+        'backup': backup,
+        'skills': skillCount,
+        'yesNo': yesNoCount,
+        'fields': fieldCount,
+        'entries': entryCount,
+        'keptFormula': formulaCount,
+        'kept': kept,
+      });
+    } on FileSystemException catch (e) {
+      return _json(req, {'error': '写不进去（这张表可能正在 Excel 里开着，先关掉再试）：${e.message}'},
+          status: 409);
+    }
+  }
+
+  // 读卡：把这张卡里已有的内容读出来，交给界面放进备选区。
+  // 分两类：表单字段（身份 / 等级职业 / 起源 / 属性技能 / 装备 / 魔法物品）
+  // 和词条（职业特性 / 种族特性 / 专长 / 魔法物品 / 法术）。
+  if (path == '/api/card' && req.method == 'GET') {
+    final target = p.normalize(kTable);
+    final src = File(target);
+    if (!await src.exists()) {
+      return _json(req, {'error': '目标表格不存在：$target（先在下面新建或选一张）'}, status: 400);
+    }
+    final fields = <Map<String, dynamic>>[];
+    final entries = <Map<String, dynamic>>[];
+
+    // 1) 表单字段：非空的、能写的都要
+    for (final key in ['basic', 'origin', 'gear', 'magic']) {
+      for (final f in await _formFields(key, target) ?? const <FormField>[]) {
+        if (f.kind == 'readonly' || f.kind == 'label') continue;
+        if (f.cell.isEmpty) continue;
+        final v = f.value.trim();
+        if (v.isEmpty) continue;
+        fields.add({
+          'formKey': key,
+          'page': _formTitles[key] ?? key,
+          'field': f.field,
+          'label': f.label,
+          'section': f.section,
+          'cell': f.cell,
+          'value': v,
+        });
+      }
+    }
+
+    // 2) 词条：拿名字回词条库里找 id，找不到就用页面名 + 名字凑一个
+    final byName = <String, Entry>{};
+    for (final e in repo.entries) {
+      final k = e.normalizedName;
+      if (k.isNotEmpty) byName.putIfAbsent(k, () => e);
+    }
+    final headLen = <String, int>{};
+    try {
+      final tplFile = File(kTemplatePath);
+      if (await tplFile.exists()) {
+        headLen.addAll(_templateHeadLen(XlsxPatcher.open(await tplFile.readAsBytes())));
+      }
+    } catch (_) {}
+
+    void addEntry(String pageKey, String pageLabel, String name) {
+      final n = name.trim();
+      if (n.isEmpty) return;
+      final hit = byName[normalizeKey(n)];
+      entries.add({
+        'formKey': pageKey,
+        'page': pageLabel,
+        'id': hit?.id ?? '$pageKey:$n',
+        'name': n,
+        'subtitle': hit?.subtitle ?? '',
+      });
+    }
+
+    for (final key in ['class', 'species', 'feat', 'magic']) {
+      final plan = await _pagePlan(key, target, refresh: true);
+      if (plan == null) continue;
+      final label = pageSpecs[key]?.title ?? key;
+      final skip = headLen[key] ?? 0;
+      for (var i = 0; i < plan.existing.length; i++) {
+        if (i < skip) continue;   // 卡自己的结构行，不算词条
+        addEntry(key, label, plan.existing[i]);
+      }
+    }
+
+    // 3) 法术
+    final info = await _tableInfo(target, refresh: true);
+    if (info != null) {
+      for (final n in info.filled) {
+        addEntry('spell', '法术列表', n);
+      }
+    }
+
+    return _json(req, {
+      'ok': true,
+      'table': target,
+      'name': p.basename(target),
+      'fields': fields,
+      'entries': entries,
+    });
+  }
+
   if (path == '/api/table/create' && req.method == 'POST') {
     final b = await _body(req);
     var dir = (b['dir'] ?? '').toString().trim();
@@ -2183,13 +2414,43 @@ Future<Map<String, dynamic>> _formJson(String key, {bool refresh = false}) async
   };
 }
 
+/// 模板里每个词条列开头有几格是「卡自己的结构」（标签 / 卡算出来的行标题），
+/// 这些既不该在初始化时被清掉，读卡时也不该当成玩家填的词条。
+Map<String, int> _templateHeadLen(XlsxPatcher tpl) {
+  final out = <String, int>{};
+  for (final key in ['class', 'species', 'feat', 'magic']) {
+    final spec = pageSpecs[key];
+    if (spec == null) continue;
+    var bs = tpl.linkedBlocks(sheet: spec.drivingSheet, sourceSheet: kMainSheet, minRun: 3);
+    if (bs.isEmpty) bs = tpl.linkedBlocks(sourceSheet: kMainSheet, minRun: 3);
+    if (key == 'magic') bs = [_magicItemBlock(tpl)];
+    if (bs.isEmpty) continue;
+    bs.sort((a, b) => b.slots.compareTo(a.slots));
+    var n = 0;
+    for (final c in bs.first.cells) {
+      if (tpl.cellText(kMainSheet, c).trim().isEmpty) break;
+      n++;
+    }
+    out[key] = n;
+  }
+  return out;
+}
+
+/// 换卡（换目标表）之后，所有按表缓存的都得丢掉：
+/// 表信息、各表单、各词条页的槽位识别结果都属于"上一张卡"。
+void _dropTableCaches() {
+  _tableCacheKey = '';
+  _formCacheKey.clear();
+  _pageCacheKey.clear();
+}
+
 Future<String?> _setTable(String path, {bool mustExist = true}) async {
   final target = p.normalize(path);
   if (mustExist && !await File(target).exists()) return '文件不存在：$target';
   if (!target.toLowerCase().endsWith('.xlsx')) return '只能选 .xlsx 文件：$target';
   kTable = target;
   await _saveConfig();
-  _tableCacheKey = '';
+  _dropTableCaches();
   return null;
 }
 
@@ -2207,7 +2468,7 @@ Future<String?> _createFromTemplate(String target, {required bool overwrite}) as
   _createdThisSession.add(path);
   kTable = path;
   await _saveConfig();
-  _tableCacheKey = '';
+  _dropTableCaches();
   return null;
 }
 
@@ -2321,7 +2582,13 @@ Future<String?> _loadConfig() async {
 
 // ---------------------------------------------------------------- 目录浏览
 Future<Map<String, dynamic>> _fsListing(String dir) async {
-  final norm = p.normalize(dir);
+  String norm;
+  try {
+    norm = p.normalize(dir);
+  } catch (_) {
+    // 手动选择那个框里手打的路径可能是坏的，别让整个接口 500
+    return {'dir': dir, 'exists': false, 'error': '这个路径不对：$dir', 'entries': <Object>[], 'table': kTable};
+  }
   final d = Directory(norm);
   if (!await d.exists()) {
     return {'dir': norm, 'exists': false, 'entries': <Object>[], 'table': kTable};
