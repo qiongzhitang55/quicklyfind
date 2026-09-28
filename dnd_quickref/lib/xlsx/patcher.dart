@@ -215,6 +215,8 @@ class XlsxPatcher {
   final Map<String, String> _xmlCache = {};
   List<String>? _sst;
   final Map<String, Map<int, String>> _columnCache = {};
+  final Map<String, List<CellNode>> _cellsCache = {};
+  final Map<String, Map<String, CellNode>> _cellIndexCache = {};
 
   XlsxPatcher._(this._archive, this._originalBytes, this._sheetToPath);
 
@@ -277,6 +279,37 @@ class XlsxPatcher {
     });
   }
 
+  /// 一张表里所有单元格（**按表缓存**）。
+  ///
+  /// 「基本信息」那一页要问 160 多个字段「这个格子在不在 / 能不能写」，
+  /// 以前每次都 `scanCells(sheetXml(...))` 把整张表的 XML（300 KB 上下）重扫一遍，
+  /// 冷启动一次要 4 秒。缓存之后整页只扫一次。
+  List<CellNode> cells(String sheet) => _cellsCache.putIfAbsent(
+        sheet,
+        () => hasSheet(sheet) ? scanCells(sheetXml(sheet)) : const <CellNode>[],
+      );
+
+  Map<String, CellNode> _cellIndex(String sheet) => _cellIndexCache.putIfAbsent(sheet, () {
+        final m = <String, CellNode>{};
+        for (final c in cells(sheet)) {
+          m.putIfAbsent(c.ref, () => c);
+        }
+        return m;
+      });
+
+  /// 按格号取单元格；没有就返回 null
+  CellNode? cellNode(String sheet, String ref) =>
+      hasSheet(sheet) ? _cellIndex(sheet)[ref.toUpperCase()] : null;
+
+  /// 格子在不在（公式格也算在）
+  bool hasCell(String sheet, String ref) => cellNode(sheet, ref) != null;
+
+  /// 能写吗：格子要存在，而且不能是公式（公式格是卡自己算的，不能覆盖）
+  bool isWritableCell(String sheet, String ref) {
+    final c = cellNode(sheet, ref);
+    return c != null && !c.hasFormula;
+  }
+
   // ------------------------------------------------------------ 读
   static String _allText(String inner) {
     // 去掉注音（rPh）再取所有 <t>；富文本多个 run 直接拼起来
@@ -323,7 +356,7 @@ class XlsxPatcher {
     final cached = _columnCache[key];
     if (cached != null) return cached;
     final out = <int, String>{};
-    for (final c in scanCells(sheetXml(sheet))) {
+    for (final c in cells(sheet)) {
       if (c.column != column.toUpperCase()) continue;
       if (c.row < fromRow || c.row > toRow) continue;
       final v = cellValue(sheet, c);
@@ -339,13 +372,13 @@ class XlsxPatcher {
   /// 这张表里所有「含公式」的格子（ref 集合）。
   /// 批量写（比如「初始化」清空一张卡）之前用它挡一下，别把卡里的公式覆盖掉。
   Set<String> formulaRefs(String sheet) => {
-        for (final c in scanCells(sheetXml(sheet))) if (c.hasFormula) c.ref,
+        for (final c in cells(sheet)) if (c.hasFormula) c.ref,
       };
 
   /// 某一列里所有非空文本值（不限行范围）
   List<String> columnAll(String sheet, String column) {
     final out = <String>[];
-    for (final c in scanCells(sheetXml(sheet))) {
+    for (final c in cells(sheet)) {
       if (c.column != column.toUpperCase()) continue;
       final v = cellValue(sheet, c);
       if (v == null) continue;
@@ -368,7 +401,7 @@ class XlsxPatcher {
   }) {
     if (!hasSheet(sheet)) return const [];
     final byColumn = <String, List<int>>{};
-    for (final c in scanCells(sheetXml(sheet))) {
+    for (final c in cells(sheet)) {
       final f = RegExp(r'<f[^>]*>(.*?)</f>', dotAll: true).firstMatch(c.body)?.group(1);
       if (f == null) continue;
       for (final m in RegExp(r'VLOOKUP\(([^)]*)\)', caseSensitive: false).allMatches(f)) {
@@ -427,7 +460,7 @@ class XlsxPatcher {
     String sourceSheet,
   ) {
     final out = <({String sheet, String column, int row})>[];
-    for (final c in scanCells(sheetXml(sheet))) {
+    for (final c in cells(sheet)) {
       final f = RegExp(r'<f[^>]*>(.*?)</f>', dotAll: true).firstMatch(c.body)?.group(1);
       if (f == null) continue;
       for (final m in _refAny.allMatches(f)) {
@@ -523,7 +556,7 @@ class XlsxPatcher {
     final groups = <String, List<({String sheet, String column, int row})>>{};
     for (final s in (sheet == null ? sheetNames : [sheet])) {
       if (!hasSheet(s)) continue;
-      for (final c in scanCells(sheetXml(s))) {
+      for (final c in cells(s)) {
         final f = RegExp(r'<f[^>]*>(.*?)</f>', dotAll: true).firstMatch(c.body)?.group(1);
         if (f == null) continue;
         for (final m in _zeroPair.allMatches(f)) {
@@ -557,13 +590,40 @@ class XlsxPatcher {
 
   /// 读单个格子的文本（没有内容返回空串）
   String cellText(String sheet, String ref) {
-    if (!hasSheet(sheet)) return '';
-    for (final c in scanCells(sheetXml(sheet))) {
-      if (c.ref != ref.toUpperCase()) continue;
-      return (cellValue(sheet, c) ?? '').trim();
-    }
-    return '';
+    final c = cellNode(sheet, ref);
+    if (c == null) return '';
+    return (cellValue(sheet, c) ?? '').trim();
   }
+
+  /// 卡里所有「数据验证里带某个关键词」的 sqref 范围。
+  /// `背包` 表就是靠这个认出几个 10 格区块的：稀有度那一串（普通,非普通,珍稀…）
+  /// 只覆盖真正的格子区，表头行和其它列都不会被算进来。
+  List<String> validationRanges(String sheet, String formulaContains) {
+    if (!hasSheet(sheet)) return const [];
+    final out = <String>[];
+    final xml = sheetXml(sheet);
+    for (final m in _dataValidationRe.allMatches(xml)) {
+      final f = _formula1In(m.group(2) ?? '');
+      if (!xmlUnescape(f).contains(formulaContains)) continue;
+      final sqref = RegExp(r'sqref="([^"]*)"').firstMatch(m.group(1) ?? '')?.group(1) ?? '';
+      for (final part in sqref.split(RegExp(r'[,\s]+'))) {
+        final t = part.trim().toUpperCase().replaceAll(r'$', '');
+        if (t.isNotEmpty) out.add(t);
+      }
+    }
+    return out;
+  }
+
+  /// 一条 `<dataValidation>`。**必须区分自闭合和成对两种**：
+  /// 卡里两种混着写，用 `<dataValidation[^>]*>.*?</dataValidation>` 去配，
+  /// 会从一条自闭合的（没有 `</dataValidation>`）一路吃到**后面**那条的闭合标签，
+  /// 于是 sqref 是前一条的、formula1 是后一条的 —— 下拉选项就配到别的格子上了。
+  static final _dataValidationRe = RegExp(
+      r'<dataValidation\b([^>]*?)(?:/>|>(.*?)</dataValidation>)',
+      dotAll: true);
+
+  static String _formula1In(String body) =>
+      RegExp(r'<formula1>(.*?)</formula1>', dotAll: true).firstMatch(body)?.group(1) ?? '';
 
   /// 读卡里给某个格子配的下拉选项（`<dataValidation sqref="T8"><formula1>"a,b,c"</formula1>`）。
   /// `sqref` 经常写成**范围**（`R42:T51`、`F32:F36`、`B13:B18` 这种），所以按「格子落在范围里」判，
@@ -571,12 +631,10 @@ class XlsxPatcher {
   List<String> validationOptions(String sheet, String ref) {
     if (!hasSheet(sheet)) return const [];
     final xml = sheetXml(sheet);
-    for (final m in RegExp(r'<dataValidation\b[^>]*>.*?</dataValidation>', dotAll: true).allMatches(xml)) {
-      final block = m.group(0)!;
-      final sqref = RegExp(r'sqref="([^"]*)"').firstMatch(block)?.group(1) ?? '';
+    for (final m in _dataValidationRe.allMatches(xml)) {
+      final sqref = RegExp(r'sqref="([^"]*)"').firstMatch(m.group(1) ?? '')?.group(1) ?? '';
       if (!sqref.split(' ').any((r) => _sqrefCovers(r.trim(), ref))) continue;
-      final f = RegExp(r'<formula1>(.*?)</formula1>', dotAll: true).firstMatch(block)?.group(1) ?? '';
-      final t = xmlUnescape(f).trim();
+      final t = xmlUnescape(_formula1In(m.group(2) ?? '')).trim();
       if (!t.startsWith('"')) continue;
       return t
           .replaceAll(RegExp(r'^"|"$'), '')
@@ -628,7 +686,7 @@ class XlsxPatcher {
     final byColumn = <String, List<int>>{};
     for (final s in (sheet == null ? sheetNames : [sheet])) {
       if (!hasSheet(s)) continue;
-      for (final c in scanCells(sheetXml(s))) {
+      for (final c in cells(s)) {
         final f = RegExp(r'<f[^>]*>(.*?)</f>', dotAll: true).firstMatch(c.body)?.group(1);
         if (f == null) continue;
         if (!direct.hasMatch(f)) continue;
@@ -768,7 +826,7 @@ class XlsxPatcher {
     final takenKeys = <String>{};
     final freeSlots = <String>[];
     final formulaCells = <String>{
-      for (final c in scanCells(sheetXml(sheet))) if (c.hasFormula) c.ref,
+      for (final c in cells(sheet)) if (c.hasFormula) c.ref,
     };
     for (final b in bs) {
       final vals = columnValues(sheet, b.column, b.startRow, b.endRow);

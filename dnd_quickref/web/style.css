@@ -23,31 +23,14 @@ html, body {
 
 body { display: flex; flex-direction: column; }
 
-header {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
+/* 「备选区」标题行那颗「📋 待办」：点开悬浮窗第二页「待办事项」 */
+#btnTodo { white-space: nowrap; }
+#btnTodo.miss { color: #e8b76a; }
+#btnTodo b.n {
+  color: #f0c684;
+  font-weight: 600;
+  margin-left: 4px;
 }
-/* 顶栏：车卡进度（已填 / 还没填 / 还能选什么） */
-header { flex-wrap: wrap; align-items: center; }
-.progress { display: flex; flex-wrap: wrap; gap: 5px 8px; font-size: 12px; color: var(--dim); }
-.progress .pg {
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 1px 8px;
-  background: #20242c;
-  white-space: nowrap;
-}
-.progress .pg b { color: var(--fg); font-weight: 600; margin-left: 4px; }
-.progress .pg.ok { border-color: #2f4a33; color: #6fae78; }
-.progress .pg.ok b { color: #8fc79a; }
-.progress .pg.todo { border-color: #6b4a24; color: #e8b76a; }
-.progress .pg.todo b { color: #f0c684; }
-.progress .pg[data-goto] { cursor: pointer; }
-.progress .pg[data-goto]:hover { background: #2b3040; }
 
 .stale {
   padding: 7px 16px;
@@ -196,6 +179,39 @@ main {
 }
 .ph-box-mark { letter-spacing: 6px; color: #5c6470; }
 .ph-box-hint { font-size: 12px; color: #5c6470; text-align: center; padding: 0 20px; }
+
+/* ---------------------------------------------------- 致谢页 */
+#viewThanks { overflow: auto; }
+.thanks { max-width: 760px; margin: 0 auto; padding: 26px 24px 60px; }
+.thanks .th-title { font-size: 22px; margin: 0 0 18px; }
+.thanks .th-sec {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.thanks .th-sec h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.thanks .th-p { color: var(--fg); margin: 0 0 8px; }
+.thanks .th-p.dim { color: var(--dim); font-size: 13px; }
+.thanks .th-row { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 3px 0; font-size: 13px; }
+.thanks .th-k { flex: 0 0 auto; min-width: 92px; color: var(--dim); }
+/* 窄栏（内置浏览器 / 分栏拖窄了）时值会折到下一行，别挤成一列一个字 */
+.thanks .th-v { flex: 1 1 160px; min-width: 0; color: var(--fg); word-break: break-word; }
+.thanks .th-v b { color: var(--accent); font-weight: 600; }
+.thanks .th-v code {
+  background: var(--panel2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--fg);
+}
+.thanks .th-note { color: #5c6470; font-size: 12px; margin-top: 8px; }
+.thanks a { color: var(--accent2); }
 
 /* ---------------------------------------------------- 表单页 */
 #viewForm { display: flex; justify-content: center; overflow: auto; }
@@ -409,6 +425,8 @@ main {
   gap: 8px;
 }
 .fill-head b { color: var(--accent); }
+/* 备选区标题行多了一颗「📋 待办」：窄的时候让它换行，别把「清空」挤出去 */
+.fill-head { flex-wrap: wrap; }
 .count {
   min-width: 22px;
   text-align: center;
@@ -502,6 +520,19 @@ button.icon { padding: 3px 7px; background: none; border-color: transparent; }
 }
 .item .add:hover { background: var(--accent); color: #201a10; }
 .item .intray { grid-column: 2; font-size: 11px; color: var(--ok); }
+.item .pickone { grid-column: 1 / -1; display: flex; gap: 6px; margin-top: 2px; }
+.item .pickone input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 3px 8px;
+  color: inherit;
+  background: #1b1e24;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.item .pickone input:focus { border-color: var(--accent); outline: none; }
+.item .pickone .add { grid-row: auto; grid-column: auto; }
 .item .auto { grid-column: 2; font-size: 11px; color: #5c6470; white-space: nowrap; }
 .item .t .kind {
   margin-left: 8px;
@@ -582,6 +613,227 @@ button.icon { padding: 3px 7px; background: none; border-color: transparent; }
   color: #d6dae2;
 }
 .empty { color: var(--dim); padding: 20px 6px; text-align: center; }
+
+/* ---------------------------------------------- 词条效果小窗（点哪一条看哪一条，能拖着走） */
+.pop {
+  position: fixed;
+  z-index: 80;
+  width: min(560px, calc(100vw - 40px));
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  background: #1b1e24;
+  border: 1px solid #3b414c;
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .55);
+}
+/* !important：上面那句 display:flex 比 [hidden] 的 UA 规则优先级高 ——
+   少了这一条，`pop.hidden = true` 设了也白设，窗口「关不掉」（就是这个坑） */
+.pop[hidden] { display: none !important; }
+.pop-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #23272f;
+  border-bottom: 1px solid #31363f;
+  border-radius: 9px 9px 0 0;
+  cursor: move;
+  user-select: none;
+}
+.pop-bar .pop-kind { font-size: 12px; color: var(--accent); }
+.pop-bar .pop-hint { font-size: 11px; color: #6f7786; flex: 1; }
+.pop-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 16px;
+}
+/* 右下角：看得见、拖得动的缩放角（Chromium 自带的 resize 手柄在深色主题里几乎看不见） */
+.pop-grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 0 45%, #4c5361 45% 55%, transparent 55% 70%, #4c5361 70% 80%, transparent 80%);
+}
+.pop-grip:hover { background-color: #2b313b; }
+.pop h2 { margin: 0 26px 2px 0; font-size: 17px; }
+.pop .en { color: var(--dim); font-size: 12px; }
+.pop .tagline { margin: 8px 0; }
+.pop .add { margin: 8px 0 10px; }
+.pop table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+.pop td { padding: 4px 8px; border-bottom: 1px solid #262b33; vertical-align: top; }
+.pop td.k { color: var(--dim); white-space: nowrap; width: 84px; }
+.pop pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  margin: 0;
+  color: #d6dae2;
+}
+.pop-x {
+  background: #2c313a;
+  border: 1px solid #3b414c;
+  border-radius: 6px;
+  color: var(--dim);
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.pop-x:hover { color: var(--fg); border-color: #59606d; background: #343a45; }
+
+/* 悬浮窗两个页签：① 词条详解（点哪条看哪条）② 待办事项（还差什么、还能选什么） */
+.pop-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px 0;
+  background: #23272f;
+  border-bottom: 1px solid #31363f;
+}
+.pop-tab {
+  font: inherit;
+  font-size: 12px;
+  color: var(--dim);
+  background: #1f232a;
+  border: 1px solid #31363f;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.pop-tab:hover { color: var(--fg); background: #2b3039; }
+.pop-tab.on { color: var(--fg); background: #1b1e24; border-color: #3b414c; }
+
+/* 待办事项那一页 */
+.todo-sum {
+  padding: 9px 12px;
+  margin-bottom: 10px;
+  background: #20242c;
+  border: 1px solid #31363f;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.todo-sum b { color: var(--fg); }
+.todo-sum .sep { margin: 0 6px; color: #4c5361; }
+.todo-group { margin-bottom: 12px; }
+.todo-group h4 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7b8291;
+  letter-spacing: .04em;
+}
+.todo-item { border-radius: 7px; }
+.todo-item.miss { background: #241f18; }
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.todo-row .mk { width: 12px; color: #6f7786; }
+.todo-item.done .mk { color: #6fae78; }
+.todo-item.miss .mk { color: #d79a4a; }
+.todo-row .lb { color: var(--dim); }
+.todo-row .vl { color: var(--fg); margin-left: auto; }
+.todo-item.miss .vl { color: #f0c684; }
+.todo-item.done .vl { color: #8fc79a; }
+.todo-row.plain .lb { color: var(--fg); }
+.todo-row .go { margin-left: 10px; }
+.todo-go {
+  font: inherit;
+  font-size: 11px;
+  color: var(--accent);
+  background: #2a2f3a;
+  border: 1px solid #3b414c;
+  border-radius: 6px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.todo-go:hover { background: #343a45; border-color: #59606d; }
+.todo-d { padding: 0 10px 5px 30px; font-size: 12px; color: var(--dim); }
+.todo-note { padding: 2px 10px 6px 30px; font-size: 12px; color: var(--dim); line-height: 1.8; }
+.todo-note b { color: var(--fg); }
+.todo-note .dim { color: #6f7786; }
+
+/* 悬浮窗里的「……之一」候选按钮（种族特性那种要挑一个的熟练） */
+.pop .choices { margin: 8px 0 10px; }
+.pop .choices-t { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+.pop .pop-choice {
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg);
+  background: #2a2f3a;
+  border: 1px solid #3b414c;
+  border-radius: 7px;
+  padding: 3px 12px;
+  margin: 0 6px 6px 0;
+  cursor: pointer;
+}
+.pop .pop-choice:hover { background: #343a45; border-color: #59606d; }
+
+/* 「已选」那一栏（原来放词条详情的地方）：列的是你挑过的，写表还是走备选区 */
+.picked-head {
+  padding: 10px 12px 8px;
+  color: var(--dim);
+  font-size: 12px;
+  border-bottom: 1px solid #24282f;
+}
+.picked-head b { color: var(--fg); }
+.picked-head .hint { color: #7b8291; }
+.picked {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #22262c;
+  cursor: pointer;
+}
+.picked:hover { background: #20242b; }
+.picked .t { flex: 1; min-width: 0; }
+.picked .t .nm { color: var(--fg); }
+.picked .t .en { color: var(--dim); font-size: 12px; margin-left: 6px; }
+.picked .t .s { color: var(--dim); font-size: 11px; }
+.picked .del {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 14px;
+}
+.picked .del:hover { color: var(--danger); }
+
+/* 规则配额（上限只是提示，不拦 —— 到上限了照样能加） */
+.quota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #22262c;
+}
+.quota-lk { padding: 6px 10px 2px; border-bottom: none; }
+.quota .q {
+  font-size: 12px;
+  color: var(--dim);
+  border: 1px solid #343a45;
+  border-radius: 9px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.quota .q b { color: var(--fg); font-weight: 600; }
+.quota .q i { font-style: normal; color: var(--dim); }
+.quota .q.full { border-color: #4b3f24; background: #2a2317; color: var(--accent); }
+.quota .q.full b { color: var(--accent); }
+.quota .q.over { border-color: #4c2b28; background: #2c1f1e; color: var(--danger); }
+.quota .q.over b, .quota .q.over i { color: var(--danger); }
+.msg.warn { color: var(--accent); }
 
 /* ---------------------------------------------------- 右：填入区 */
 .badge {

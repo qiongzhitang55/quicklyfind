@@ -11,6 +11,8 @@ The xlsx is never modified here; writing back is a separate, surgical step.
 from __future__ import annotations
 
 import argparse
+import datetime
+import hashlib
 import io
 import json
 import os
@@ -111,9 +113,50 @@ def cmd_headers(xlsx: str) -> int:
     return 0
 
 
-def cmd_dump(xlsx: str) -> int:
+def grid_source(xlsx: str) -> dict:
+    with open(xlsx, "rb") as fh:
+        digest = hashlib.sha256(fh.read()).hexdigest()
+    return {
+        "card": os.path.abspath(xlsx),
+        "sha256": digest,
+        "dumpedAt": datetime.datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+def cmd_dump(xlsx: str, out_dir: str = GRID_DIR, force: bool = False) -> int:
+    """把一张卡的每个工作表导成 `<sheet>.json`。
+
+    `card/grids/` 是**词条抽取的基线**：`extract_equipment.py` / `extract_feats.py` /
+    `extract_species_class.py` 都直接从这儿读格子，`dnd-data/` 就是照它复现出来的。
+    那份基线固定来自 `card\\米瑞尔.xlsx`（老版式），换另一张卡重导会让结果对不上，
+    所以这里记下出处（`_source.json`），发现要换成别的卡就直接拒绝——确实要换加 `--force`，
+    或者用 `--out` 导到另一个目录去比。
+    """
+    src = os.path.abspath(xlsx)
+    if not os.path.exists(src):
+        print("xlsx not found:", src)
+        return 1
+    src_info = grid_source(src)
+    note_path = os.path.join(out_dir, "_source.json")
+    if os.path.exists(note_path) and not force:
+        try:
+            with open(note_path, encoding="utf-8") as fh:
+                old = json.load(fh)
+        except (OSError, ValueError):
+            old = {}
+        if old.get("sha256") and old["sha256"] != src_info["sha256"]:
+            print(f"拒绝覆盖：{out_dir} 的网格来自\n"
+                  f"    {old.get('card')}\n"
+                  f"    sha256 {old['sha256']}\n"
+                  f"现在要给的是\n"
+                  f"    {src_info['card']}\n"
+                  f"    sha256 {src_info['sha256']}\n"
+                  "这两张卡版式不同，换掉会让 dnd-data 的复现结果对不上。\n"
+                  "真要换：加 --force（原地换基线），或者用 --out 导到别处去对比。")
+            return 1
+
     grids = read_workbook(xlsx)
-    os.makedirs(GRID_DIR, exist_ok=True)
+    os.makedirs(out_dir, exist_ok=True)
     for name, grid in grids.items():
         mr, mc = sheet_shape(grid)
         data = {
@@ -122,9 +165,13 @@ def cmd_dump(xlsx: str) -> int:
             "cols": mc,
             "cells": {f"{r},{c}": v for (r, c), v in grid.items()},
         }
-        with open(os.path.join(GRID_DIR, f"{name}.json"), "w", encoding="utf-8") as fh:
+        with open(os.path.join(out_dir, f"{name}.json"), "w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False)
-    print(f"wrote {len(grids)} grids -> {GRID_DIR}")
+    src_info["sheets"] = list(grids)
+    with open(note_path, "w", encoding="utf-8") as fh:
+        json.dump(src_info, fh, ensure_ascii=False, indent=2)
+    print(f"wrote {len(grids)} grids -> {out_dir}")
+    print(f"  出处已记到 {note_path}（{src_info['card']}）")
     return 0
 
 
@@ -200,11 +247,16 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["headers", "dump", "spells"])
     ap.add_argument("--xlsx", default=DEFAULT_XLSX)
+    ap.add_argument("--out", default=GRID_DIR, help="dump 写到哪个目录（默认 card\\grids）")
+    ap.add_argument("--force", action="store_true",
+                    help="dump 到已有基线的目录时允许换一张卡（默认拒绝，见 cmd_dump 注释）")
     args = ap.parse_args()
     if not os.path.exists(args.xlsx):
         print("xlsx not found:", args.xlsx)
         return 1
-    return {"headers": cmd_headers, "dump": cmd_dump, "spells": cmd_spells}[args.cmd](args.xlsx)
+    if args.cmd == "dump":
+        return cmd_dump(args.xlsx, args.out, args.force)
+    return {"headers": cmd_headers, "spells": cmd_spells}[args.cmd](args.xlsx)
 
 
 if __name__ == "__main__":

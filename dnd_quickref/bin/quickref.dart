@@ -72,13 +72,39 @@ bool get kPortable => _devRoot == null;
 /// 法术词条目录
 late String kDataDir = p.join(kWorkspaceRoot, 'dnd-data');
 
-/// 「新建表格」用的空白模板。
+/// 「新建表格」用的空白模板：`card\空白卡*.xlsx` 里**版本号最高**的那一份。
 ///
-/// 以用户给的那份 v1.0.12 卡为准；card\空白卡.xlsx 是更早的 v1.0.0 版式，
-/// 主要表的格子位置不一样，只留作参考。
-late String kTemplatePath = p.join(kWorkspaceRoot, 'card', '空白卡v1.0.12.xlsx');
+/// 卡是「似雨悲灵」的自动卡，文件名带版本：`空白卡v1.1.1.xlsx` 是当前基准，
+/// `空白卡v1.0.12.xlsx` / `空白卡.xlsx`（v1.0.0）是旧版式，只留作参考。
+/// 三个版本的「主要」表格子位置并不一样（技能表分别从 **40 / 41 / 32** 行开始，
+/// 战斗块、法术块也各挪过），所以挑模板不能写死文件名——按版本号挑，
+/// 以后往 `card\` 里丢一份更新的空白卡就自动升级。
+String _pickTemplate(String cardDir) {
+  var best = '';
+  var bestKey = -1;
+  try {
+    for (final f in Directory(cardDir).listSync().whereType<File>()) {
+      final name = p.basename(f.path);
+      if (!name.toLowerCase().endsWith('.xlsx') || !name.startsWith('空白卡')) continue;
+      final m = RegExp(r'v(\d+)\.(\d+)(?:\.(\d+))?').firstMatch(name);
+      final key = m == null
+          ? 0
+          : int.parse(m.group(1)!) * 10000 +
+              int.parse(m.group(2)!) * 100 +
+              int.parse(m.group(3) ?? '0');
+      if (key > bestKey) {
+        bestKey = key;
+        best = f.path;
+      }
+    }
+  } catch (_) {}
+  return best.isEmpty ? p.join(cardDir, '空白卡v1.1.1.xlsx') : best;
+}
 
-/// 默认目标表格（会被界面里选过的表覆盖，记录在 .quickref.json）。
+late String kTemplatePath = _pickTemplate(p.join(kWorkspaceRoot, 'card'));
+
+/// 默认目标表格。界面里选过的表记在 `.quickref.json`，下次启动优先用它；
+/// 但命令行明写了 `--card` 时以命令行为准（`--card` 是"这次就用这张"）。
 /// 便携版里没有「悲灵.xlsx」，就挑 card\ 里第一张不像模板的卡；
 /// 一张都没有（只有空白模板）就返回空串，由 main() 复制一张新的出来。
 String _pickDefaultTable(String cardDir) {
@@ -151,13 +177,17 @@ Future<void> main(List<String> args) async {
 
   kDataDir = _arg(args, '--data') ?? kDataDir;
   kTemplatePath = _arg(args, '--template') ?? kTemplatePath;
-  kDefaultTable = _arg(args, '--card') ?? kDefaultTable;
+  // 命令行明写了 `--card` 就以它为准：下面读回来那句「上次用的是哪张表」
+  // 只该在没人指定目标表时生效，否则 `--card` 会被悄悄顶掉，
+  // 以为在写临时副本、其实写进了上次那张卡。
+  final cardArg = _arg(args, '--card');
+  kDefaultTable = cardArg ?? kDefaultTable;
   kTable = kDefaultTable;
   final port = int.tryParse(_arg(args, '--port') ?? '') ?? 8765;
   final open = !args.contains('--no-open');
 
   final remembered = await _loadConfig();
-  if (remembered != null) kTable = remembered;
+  if (remembered != null && cardArg == null) kTable = remembered;
   // 目标表不在了（便携版第一次跑、或者卡被挪走）：拿空白模板复制一张新的出来
   if (!await File(kTable).existsSync() && await File(kTemplatePath).existsSync()) {
     final fresh = p.join(p.dirname(kTemplatePath), '新人物卡.xlsx');
@@ -431,7 +461,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     return _json(req, {
       // 前端用它判断「服务端是不是刚重启过的那个版本」，对不上会直接提示重启。
       // 改了 Dart 侧的行为（新接口、新字段）就把这个数字加一。
-      'api': 5,
+      'api': 6,
       'total': repo.entries.length,
       'counts': repo.typeCounts(),
       'typeLabels': Repository.typeLabels,
@@ -447,6 +477,11 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         'portable': kPortable,
       },
     });
+  }
+
+  // 「致谢」那一页：这张人物卡的作者是谁、怎么联系（从卡里的「更新」表认出来）
+  if (path == '/api/credits') {
+    return _json(req, await _creditsJson());
   }
 
   if (path == '/api/search') {
@@ -543,7 +578,9 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     }
     try {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
-      final plan = planBackgroundEffects(patcher, effects, skillRows: _skillRows);
+      // 技能行从这张卡里认（老版式卡在 32–53 行），写死会把「运动」的勾打到「自然」上
+      final plan = planBackgroundEffects(patcher, effects,
+          skillRows: _recognizeAttrAndSkills(patcher).skills);
       // 换出身时先把上一次这个来源写进去的格子还原，免得新旧堆在一起
       final undo = _planUndo(patcher, 'background');
       final all = <String, Map<String, String>>{};
@@ -561,8 +598,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         await src.writeAsBytes(bytes);
       }
       await _rememberEffectWrites('background', _effectRecord(patcher, plan.written));
-      _tableCacheKey = '';
-      _formCacheKey['attrs'] = '';
+      _dropTableCaches();
       return await _json(req, {
         'ok': true,
         'table': target,
@@ -607,7 +643,8 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     }
     try {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
-      final plan = planClassEffects(patcher, effects, skillRows: _skillRows);
+      final plan = planClassEffects(patcher, effects,
+          skillRows: _recognizeAttrAndSkills(patcher).skills);
       // 换主职业 / 子职业时同理：先还原上一次这个来源写的格子
       final undo = _planUndo(patcher, 'class');
       final all = <String, Map<String, String>>{};
@@ -625,8 +662,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         await src.writeAsBytes(bytes);
       }
       await _rememberEffectWrites('class', _effectRecord(patcher, plan.written));
-      _tableCacheKey = '';
-      _formCacheKey['attrs'] = '';
+      _dropTableCaches();
       return await _json(req, {
         'ok': true,
         'table': target,
@@ -635,6 +671,79 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         'undone': undo.restored,
         'auto': plan.auto,
         'unmapped': plan.unmapped,
+      });
+    } on FileSystemException catch (e) {
+      return _json(req, {'error': '写不进去（这张表可能正在 Excel 里开着，先关掉再试）：${e.message}'},
+          status: 409);
+    }
+  }
+
+  // ---------------------------------------------------------- 熟练打圈
+  /// 种族特性 / 专长里那种「A、B 或 C 之一技能的熟练」——玩家在界面上挑完之后，
+  /// 挑中的那个名字送到这儿打 `O`。技能表 / 属性表都是从卡里认出来的行，不写死行号。
+  if (path == '/api/prof/fill' && req.method == 'POST') {
+    final b = await _body(req);
+    List<String> listOf(Object? v) => (v as List?)
+            ?.map((x) => x.toString().trim())
+            .where((s) => s.isNotEmpty)
+            .toList() ??
+        const <String>[];
+    final skills = listOf(b['skills']);
+    final saves = listOf(b['saves']);
+    if (skills.isEmpty && saves.isEmpty) {
+      return _json(req, {'error': '没有要打的熟练'}, status: 400);
+    }
+    final target = p.normalize(kTable);
+    final src = File(target);
+    if (!await src.exists()) {
+      return _json(req, {'error': '目标表格不存在：$target（先在下面新建或选一张）'}, status: 400);
+    }
+    try {
+      final patcher = XlsxPatcher.open(await src.readAsBytes());
+      final rs = _recognizeAttrAndSkills(patcher);
+      final writes = <String, String>{};
+      final written = <Map<String, String>>[];
+      final unmapped = <String>[];
+      for (final name in skills) {
+        final hit = rs.skills.entries.where((x) => x.value == name).toList();
+        if (hit.isEmpty) {
+          unmapped.add('技能「$name」没在技能表里找到，没打勾');
+          continue;
+        }
+        final cell = 'B${hit.first.key}';
+        writes[cell] = 'O';
+        written.add({'label': '技能熟练', 'sheet': kMainSheet, 'cell': cell, 'value': 'O', 'name': name});
+      }
+      for (final name in saves) {
+        final hit = rs.attrs.entries.where((x) => x.value == name).toList();
+        if (hit.isEmpty) {
+          unmapped.add('属性「$name」没在属性表里找到，没打勾');
+          continue;
+        }
+        final cell = 'B${hit.first.key}';
+        writes[cell] = 'O';
+        written.add({'label': '豁免熟练', 'sheet': kMainSheet, 'cell': cell, 'value': 'O', 'name': name});
+      }
+      String? backup;
+      if (writes.isNotEmpty) {
+        if (!_createdThisSession.contains(target)) {
+          try {
+            backup = await _backup(target);
+          } catch (e) {
+            return await _json(req, {'error': '备份失败，为安全起见没有写入：$e'}, status: 500);
+          }
+        }
+        List<int> bytes = await src.readAsBytes();
+        bytes = XlsxPatcher.open(bytes).writeCells(kMainSheet, writes);
+        await src.writeAsBytes(bytes);
+        _dropTableCaches();
+      }
+      return await _json(req, {
+        'ok': true,
+        'table': target,
+        'backup': backup,
+        'written': written,
+        'unmapped': unmapped,
       });
     } on FileSystemException catch (e) {
       return _json(req, {'error': '写不进去（这张表可能正在 Excel 里开着，先关掉再试）：${e.message}'},
@@ -686,9 +795,9 @@ Future<void> _api(HttpRequest req, Uri uri) async {
 
   // 把这张卡初始化成空卡：
   //   · 所有可填字段清空
-  //   · 「熟练」这类 X/O 格 → X（卡里的约定：X=无熟练 O=有熟练）
-  //   · 「是/否」格 → 否
-  //   · 模板里带默认值的选择格（出身 = 自定义背景）恢复成模板的值
+  //   · X/O、是/否、下拉这些选择格 → **基准空白卡里那一格的值**
+  //     （熟练默认 X、是否默认 否、出身默认 自定义背景；卡自己把武器熟练
+  //      预置成 O，也照跟——初始化后的卡要和基准空白卡一模一样）
   //   · 词条列清空
   // 公式格、以及卡自己的结构行（职业能力面板那几行标签等）都不碰。
   if (path == '/api/card/reset' && req.method == 'POST') {
@@ -733,16 +842,23 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         for (final f in await _formFields(key, target) ?? const <FormField>[]) {
           if (f.kind == 'readonly' || f.kind == 'label') continue;
           if (f.cell.isEmpty) continue;
+          // 装备 / 魔法物品那两页的格子是按新版式写死的；老版式卡上它们根本没被认出来
+          // （`detected: false`）——那种卡上这些格号落到别的东西上（`主要!B32` 是「运动」的
+          // 熟练勾），一律不碰。
+          if ((key == 'gear' || key == 'magic') && !f.detected) continue;
           final old = f.value.trim();
-          if (old.isEmpty) continue;
           var next = '';
-          if (f.kind == 'toggle' && f.options.contains('X') && f.options.contains('O')) {
+          // 先看基准空白卡那一格写的是什么：它是这张卡的「空值」，照抄就对了。
+          // 模板里没值（或模板读不到）才退回 X / 否。
+          final tplValue = (tpl != null && f.kind != 'text' && f.kind != 'number')
+              ? tpl.cellText(f.sheet, f.cell).trim()
+              : '';
+          if (tplValue.isNotEmpty && tplValue != '§formula§') {
+            next = tplValue;
+          } else if (f.kind == 'toggle' && f.options.contains('X') && f.options.contains('O')) {
             next = 'X';
           } else if (f.kind == 'toggle' && f.options.contains('是') && f.options.contains('否')) {
             next = '否';
-          } else if (f.kind == 'select' && tpl != null) {
-            final tv = tpl.cellText(f.sheet, f.cell).trim();
-            if (tv.isNotEmpty && tv != '§formula§') next = tv;
           }
           if (next == old) continue;
           put(f.sheet, f.cell, next);
@@ -756,7 +872,6 @@ Future<void> _api(HttpRequest req, Uri uri) async {
       //    这样不会把卡里的结构行（职业能力面板那 6 行标签等）当成词条擦掉。
       //    另外以模板为准：模板里每个词条列开头那几格是卡自己的结构（标签 / 卡算出来的
       //    行标题），一律不碰。
-      final headLen = tpl == null ? <String, int>{} : _templateHeadLen(tpl);
       final dicts = <String, Set<String>>{
         'class': {for (final e in repo.ofType('classFeature')) normalizeKey(e.name)},
         'species': {for (final e in repo.ofType('species')) normalizeKey(e.name)},
@@ -767,7 +882,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         final plan = await _pagePlan(key, target, refresh: true);
         if (plan == null) continue;
         final allow = dicts[key] ?? const <String>{};
-        final skip = headLen[key] ?? 0;
+        final skip = _headLenFor(tpl, key, plan.blocks.isEmpty ? null : plan.blocks.first);
         for (final b in plan.blocks) {
           for (var i = 0; i < b.cells.length; i++) {
             if (i < skip) continue;   // 卡自己的结构行，不清
@@ -841,19 +956,36 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     final fields = <Map<String, dynamic>>[];
     final entries = <Map<String, dynamic>>[];
 
-    // 1) 表单字段：非空的、能写的都要
+    // 空白模板当参照：值跟模板一模一样的格子不算"这张卡里填过的东西"。
+    // 否则随便新建一张卡读出来都是「熟练 = X」「出身 = 自定义背景」这种默认值，
+    // 一屏噪音（空白卡实测 43 条）。
+    XlsxPatcher? tpl;
+    try {
+      final tplFile = File(kTemplatePath);
+      if (await tplFile.exists()) tpl = XlsxPatcher.open(await tplFile.readAsBytes());
+    } catch (_) {}
+
+    // 1) 表单字段：非空的、能写的、且**不是模板默认值**的都要
     for (final key in ['basic', 'origin', 'gear', 'magic']) {
       for (final f in await _formFields(key, target) ?? const <FormField>[]) {
         if (f.kind == 'readonly' || f.kind == 'label') continue;
         if (f.cell.isEmpty) continue;
         final v = f.value.trim();
         if (v.isEmpty) continue;
+        if (tpl != null &&
+            tpl.hasSheet(f.sheet) &&
+            tpl.cellText(f.sheet, f.cell).trim() == v) {
+          continue;   // 跟空白模板一样 = 没填过
+        }
         fields.add({
           'formKey': key,
           'page': _formTitles[key] ?? key,
           'field': f.field,
           'label': f.label,
           'section': f.section,
+          // 表格版式里的行名（六项属性=力量/敏捷…，技能=运动/特技…，装备=第 1 件…）。
+          // 界面拿它拼「力量 · 豁免」这种标题，不然备选区里只写"豁免 B13"看不出是哪一项。
+          'row': f.row,
           'cell': f.cell,
           'value': v,
         });
@@ -866,14 +998,6 @@ Future<void> _api(HttpRequest req, Uri uri) async {
       final k = e.normalizedName;
       if (k.isNotEmpty) byName.putIfAbsent(k, () => e);
     }
-    final headLen = <String, int>{};
-    try {
-      final tplFile = File(kTemplatePath);
-      if (await tplFile.exists()) {
-        headLen.addAll(_templateHeadLen(XlsxPatcher.open(await tplFile.readAsBytes())));
-      }
-    } catch (_) {}
-
     void addEntry(String pageKey, String pageLabel, String name) {
       final n = name.trim();
       if (n.isEmpty) return;
@@ -891,10 +1015,9 @@ Future<void> _api(HttpRequest req, Uri uri) async {
       final plan = await _pagePlan(key, target, refresh: true);
       if (plan == null) continue;
       final label = pageSpecs[key]?.title ?? key;
-      final skip = headLen[key] ?? 0;
-      for (var i = 0; i < plan.existing.length; i++) {
-        if (i < skip) continue;   // 卡自己的结构行，不算词条
-        addEntry(key, label, plan.existing[i]);
+      for (final name in plan.existing) {
+        // `plan.existing` 已经滤掉卡自己的结构行（见 _pagePlan）
+        addEntry(key, label, name);
       }
     }
 
@@ -964,12 +1087,12 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         dictionary: info.dictionary,
       );
       await src.writeAsBytes(outcome.bytes);
-      _tableCacheKey = '';
-      final after = await _tableInfo(target, refresh: true);
-      return await _json(req, {
-        'ok': true,
-        'table': target,
-        'backup': backup,
+      _dropTableCaches();
+        final after = await _tableInfo(target, refresh: true);
+        return await _json(req, {
+          'ok': true,
+          'table': target,
+          'backup': backup,
         'slotsTotal': after?.slotsTotal ?? 0,
         'slotsUsed': after?.used ?? 0,
         'slotsFree': after?.free ?? 0,
@@ -1020,6 +1143,11 @@ Future<void> _api(HttpRequest req, Uri uri) async {
     }
     try {
       final patcher = XlsxPatcher.open(await src.readAsBytes());
+      // 装备 / 魔法物品这两页的格子是按新版式写死的。老版式卡（空白卡.xlsx v1.0.0、
+      // 米瑞尔那种）把这几块放在完全不同的位置，写了会落到技能格上（`主要!B32` 是
+      // 「运动」的熟练勾）。字段照给（界面不缺东西），但这里不写，并在 missing 里说明。
+      final blockPage = key == 'gear' || key == 'magic';
+      final blockOk = !blockPage || _gearBlocksRecognized(patcher);
       final writes = <String, Map<String, String>>{};
       final written = <Map<String, String>>[];
       final missing = <String>[];
@@ -1028,6 +1156,12 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         if (f.kind == 'readonly' || f.kind == 'label') continue;
         final v = (values[f.field] ?? '').trim();
         if (v.isEmpty || f.cell.isEmpty) continue;
+        if (!blockOk) {
+          if (!missing.contains('装备 / 奇物块（这张卡的位置认不出来）')) {
+            missing.add('装备 / 奇物块（这张卡的位置认不出来）');
+          }
+          continue;
+        }
         // 版式不同的卡可能没有这张表（比如老卡没有「起源」），如实报出来而不是写崩
         if (!patcher.hasSheet(f.sheet)) {
           final tag = '${f.label}（${f.sheet} 表）';
@@ -1051,13 +1185,12 @@ Future<void> _api(HttpRequest req, Uri uri) async {
       for (final e in writes.entries) {
         bytes = XlsxPatcher.open(bytes).writeCells(e.key, e.value);
       }
-      await src.writeAsBytes(bytes);
-      _formCacheKey[key] = '';
-      _tableCacheKey = '';
-      return await _json(req, {
-        'ok': true,
-        'table': target,
-        'backup': backup,
+        await src.writeAsBytes(bytes);
+        _dropTableCaches();
+        return await _json(req, {
+          'ok': true,
+          'table': target,
+          'backup': backup,
         'writtenCount': written.length,
         'written': written,
         'missing': missing,
@@ -1126,8 +1259,7 @@ Future<void> _api(HttpRequest req, Uri uri) async {
         bytes = patcher.writeCells(plan.sheet, edits);
       }
       await src.writeAsBytes(bytes);
-      _pageCacheKey[key] = '';
-      _tableCacheKey = '';
+      _dropTableCaches();
 
       return await _json(req, {
         'ok': true,
@@ -1280,6 +1412,14 @@ List<String> splitEffectList(String text) {
           unmapped.add('${e.label}：「${origin}」表不存在，这张卡写不了（${e.text}）');
           continue;
         }
+        // 规则书给的是"要你自己挑"的指令时，别把整句话抄进值格（O4）。
+        // 值格只放具体名字，剩下的等玩家挑好再写。
+        if (!isConcreteAssignment(e.text)) {
+          unmapped.add(
+              '${e.label}：规则书给的是「${e.text}」，要你自己挑具体的一样——'
+              '挑好之后把它当${e.label}写进备选区（或直接填「起源」表的「熟练工具」/「语言」那几格）');
+          continue;
+        }
         final cell = freeIn(origin, e.label == '语言' ? languageSlots : toolSlots);
         if (cell == null) {
           unmapped.add('${e.label}的格子满了，没写：${e.text}');
@@ -1370,7 +1510,7 @@ List<String> splitEffectList(String text) {
   var headerRow = 0;
   if (panelCol.isNotEmpty) {
     final near = colIndex(panelCol);
-    for (final c in scanCells(p.sheetXml(kMainSheet))) {
+    for (final c in p.cells(kMainSheet)) {
       if (c.row > panelStart) continue;
       if (c.row <= headerRow) continue;
       if ((colIndex(c.column) - near).abs() > 20) continue;
@@ -1380,7 +1520,7 @@ List<String> splitEffectList(String text) {
   }
   var panelDescCol = '';
   if (headerRow > 0) {
-    for (final c in scanCells(p.sheetXml(kMainSheet))) {
+    for (final c in p.cells(kMainSheet)) {
       if (c.row != headerRow) continue;
       if ((p.cellValue(kMainSheet, c) ?? '').trim() == '描述') {
         panelDescCol = c.column;
@@ -1486,6 +1626,13 @@ List<String> splitEffectList(String text) {
           }
           continue;
         }
+        // 同上：指令句不落值格，只提示（O4）
+        if (!isConcreteAssignment(e.text)) {
+          unmapped.add(
+              '${e.label}：规则书给的是「${e.text}」，要你自己挑具体的一样——'
+              '挑好之后再抓进备选区（或直接填「起源」表的「熟练工具」/「语言」那几格）');
+          continue;
+        }
         final cell = freeIn(origin, e.label == '语言' ? languageSlots : toolSlots);
         if (cell == null) {
           unmapped.add('${e.label}的格子满了，没写：${e.text}');
@@ -1535,6 +1682,79 @@ class TableInfo {
 TableInfo? _tableCache;
 String _tableCacheKey = '';
 
+/// 目标表的解析结果（按「路径 + 修改时间 + 大小」缓存）。
+///
+/// 一次 `/api/card` 或「读卡」要读同一张表好几遍（4 张表单 + 4 个词条页 + 法术位），
+/// 每遍都 `XlsxPatcher.open` 解一次 zip；卡 1.5 MB，攒起来就是几秒。卡文件一改
+/// （mtime / 大小变了）缓存自然失效，写完代码里统一 `_dropTableCaches()`。
+XlsxPatcher? _tablePatcherCache;
+String _tablePatcherKey = '';
+
+XlsxPatcher? _tablePatcher(String path) {
+  try {
+    final f = File(path);
+    if (!f.existsSync()) return null;
+    final st = f.statSync();
+    final key = '$path|${st.modified.millisecondsSinceEpoch}|${st.size}';
+    if (_tablePatcherCache != null && _tablePatcherKey == key) return _tablePatcherCache;
+    final p = XlsxPatcher.open(f.readAsBytesSync());
+    _tablePatcherCache = p;
+    _tablePatcherKey = key;
+    return p;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// 卡里的作者信息 —— 在「更新」工作表里。按**内容**认、不钉格子：
+///   · 名字写在「修订者」那格下面一两行、同一列
+///   · 带「QQ：」的是 QQ，带「群…：」的是反馈群
+///   · 「特别鸣谢」「不禁止二次修改」原样带出来
+/// 「致谢」那一页拿这份数据画，换一张卡（或作者改了更新表）都不用动代码。
+Future<Map<String, dynamic>> _creditsJson() async {
+  final out = <String, dynamic>{
+    'found': false,
+    'sheet': '更新',
+    'author': '',
+    'qq': '',
+    'group': '',
+    'thanks': '',
+    'note': '',
+  };
+  if (kTable.isEmpty) return out;
+  final patcher = _tablePatcher(kTable);
+  const sheet = '更新';
+  if (patcher == null || !patcher.hasSheet(sheet)) return out;
+
+  final qqRe = RegExp(r'QQ\s*[：:]\s*(\d{5,})');
+  final groupRe = RegExp(r'群[^：:\n]{0,12}[：:]\s*(\d{5,})');
+  for (final c in patcher.cells(sheet)) {
+    final t = (patcher.cellValue(sheet, c) ?? '').trim();
+    if (t.isEmpty) continue;
+    if (out['qq'] == '') {
+      final m = qqRe.firstMatch(t);
+      if (m != null) out['qq'] = m.group(1)!;
+    }
+    if (out['group'] == '') {
+      final m = groupRe.firstMatch(t);
+      if (m != null) out['group'] = m.group(1)!;
+    }
+    if (out['thanks'] == '' && t.startsWith('特别鸣谢')) out['thanks'] = t;
+    if (out['note'] == '' && t.contains('不禁止二次修改')) out['note'] = t;
+    if (out['author'] == '' && t == '修订者') {
+      for (var r = c.row + 1; r <= c.row + 3; r++) {
+        final n = patcher.cellText(sheet, '${c.column}$r');
+        if (n.isEmpty) continue;
+        if (RegExp(r'^(QQ|反馈|特别鸣谢|辅助)').hasMatch(n)) break;
+        out['author'] = n;
+        break;
+      }
+    }
+  }
+  out['found'] = (out['author'] as String).isNotEmpty || (out['qq'] as String).isNotEmpty;
+  return out;
+}
+
 Future<TableInfo?> _tableInfo(String path, {bool refresh = false}) async {
   final f = File(path);
   if (!await f.exists()) return null;
@@ -1542,7 +1762,7 @@ Future<TableInfo?> _tableInfo(String path, {bool refresh = false}) async {
   final key = '$path|${st.modified.millisecondsSinceEpoch}|${st.size}';
   if (!refresh && _tableCache != null && _tableCacheKey == key) return _tableCache;
 
-  final patcher = XlsxPatcher.open(await f.readAsBytes());
+  final patcher = _tablePatcher(path) ?? XlsxPatcher.open(await f.readAsBytes());
   // 优先「法术书」；找不到就挑一张能认出法术位的表
   var sheet = kSpellSheet;
   var blocks = patcher.spellBlocks(sheet: kSpellSheet, lookupSheet: kDictSheet);
@@ -1703,18 +1923,59 @@ class PagePlan {
 final _pageCache = <String, PagePlan>{};
 final _pageCacheKey = <String, String>{};
 
-/// 卡里「奇物」那一块：找到写着「奇物」的表头，从下一行起 10 格就是奇物名输入列
-/// （悲灵 v1.0.12 是 `主要!L42:L51`）。表头找不到就按这个默认位置来。
-SpellBlock _magicItemBlock(XlsxPatcher p) {
-  if (p.hasSheet(kMainSheet)) {
-    for (final c in scanCells(p.sheetXml(kMainSheet))) {
-      if (c.row < 30 || c.row > 50) continue;
-      if ((p.cellValue(kMainSheet, c) ?? '').trim() != '奇物') continue;
-      return SpellBlock(c.column, c.row + 1, c.row + 10);
-    }
+/// 基准空白卡（`kTemplatePath`）的解析结果，按「路径 + 修改时间 + 大小」缓存。
+/// 「哪些格子算卡自己的结构」要拿它当参照。
+XlsxPatcher? _tplCache;
+String _tplCacheKey = '';
+
+XlsxPatcher? _templatePatcher() {
+  try {
+    final f = File(kTemplatePath);
+    if (!f.existsSync()) return null;
+    final key = '$kTemplatePath|${f.lastModifiedSync().millisecondsSinceEpoch}|${f.lengthSync()}';
+    if (_tplCache != null && _tplCacheKey == key) return _tplCache;
+    _tplCache = XlsxPatcher.open(f.readAsBytesSync());
+    _tplCacheKey = key;
+    return _tplCache;
+  } catch (_) {
+    return null;
   }
-  return SpellBlock('L', 42, 51);
 }
+
+/// 卡里某个表头（「奇物」`L41`、「消耗品」`L51`…）下面的**输入列**：
+/// 从表头下一行起，一直走到下一个非空表头为止。
+///
+/// **别把格数写死**：v1.0.12 的奇物是 `L42:L51`（10 格），v1.1.1 少一格
+/// （`L42:L50`，`L51` 已经变成「消耗品」的表头）——照 10 格写会把「消耗品」
+/// 这个名字当成第 10 件奇物读出来、还能写进去。同一套认法也用来找消耗品（`L52:L56`）。
+SpellBlock? _blockUnderHeader(
+  XlsxPatcher p,
+  String header, {
+  int minRow = 30,
+  int maxRow = 60,
+  int maxSlots = 12,
+}) {
+  if (!p.hasSheet(kMainSheet)) return null;
+  for (final c in p.cells(kMainSheet)) {
+    if (c.row < minRow || c.row > maxRow) continue;
+    if ((p.cellValue(kMainSheet, c) ?? '').trim() != header) continue;
+    var last = c.row + 1;
+    while (last < c.row + maxSlots &&
+        p.cellText(kMainSheet, '${c.column}${last + 1}').trim().isEmpty) {
+      last++;
+    }
+    return SpellBlock(c.column, c.row + 1, last);
+  }
+  return null;
+}
+
+/// 卡里「奇物」那一块（表头 `L41`；v1.0.12 是 10 格，v1.1.1 是 9 格）。
+/// 认不出来就按 v1.0.12 的位置兜底。
+SpellBlock _magicItemBlock(XlsxPatcher p) =>
+    _blockUnderHeader(p, '奇物') ?? SpellBlock('L', 42, 51);
+
+/// 卡里「消耗品」那一块（表头 `L51`，5 行：名称 / 稀有度 / 描述 / 数量）。
+SpellBlock? _consumableBlock(XlsxPatcher p) => _blockUnderHeader(p, '消耗品', maxRow: 60);
 
 Future<PagePlan?> _pagePlan(String pageKey, String path, {bool refresh = false}) async {
   final spec = pageSpecs[pageKey];
@@ -1727,7 +1988,7 @@ Future<PagePlan?> _pagePlan(String pageKey, String path, {bool refresh = false})
     return _pageCache[pageKey];
   }
 
-  final patcher = XlsxPatcher.open(await f.readAsBytes());
+  final patcher = _tablePatcher(path) ?? XlsxPatcher.open(await f.readAsBytes());
   // 名称输入列：驱动表里成段引用「主要」的那些列，挑最长的一条
   var blocks = patcher.linkedBlocks(sheet: spec.drivingSheet, sourceSheet: kMainSheet, minRun: 3);
   if (blocks.isEmpty) blocks = patcher.linkedBlocks(sourceSheet: kMainSheet, minRun: 3);
@@ -1745,17 +2006,25 @@ Future<PagePlan?> _pagePlan(String pageKey, String path, {bool refresh = false})
     blocks = [blocks.first];
   }
 
+  // 基准空白卡当参照：每个词条列开头那几格是卡自己的结构（标签 / 卡算出来的行标题，
+  // 比如职业面板的「豁免熟练…起始装备」六行、种族页的「生物种类 / 体型 / 速度」），
+  // 空白卡上它们也有字，但不是玩家填的词条，别读成「这张卡里已有这些」。
+  // 只在「目标卡这一块和基准卡的同一块对得上」时才跳——别版式的卡（米瑞尔那类）
+  // 块的位置完全不同，跳前几格会把真词条吃掉。
+  final skipHead = _headLenFor(_templatePatcher(), pageKey, blocks.isEmpty ? null : blocks.first);
+
   final existing = <String>[];
   var slotCount = 0;
   var freeCount = 0;
   for (final b in blocks) {
     final vals = patcher.columnValues(kMainSheet, b.column, b.startRow, b.endRow);
-    for (var r = b.startRow; r <= b.endRow; r++) {
+    for (var i = 0; i < b.slots; i++) {
+      final r = b.startRow + i;
       slotCount++;
       final v = (vals[r] ?? '').trim();
       if (v.isEmpty) {
         freeCount++;
-      } else {
+      } else if (i >= skipHead) {
         existing.add(v);
       }
     }
@@ -1850,7 +2119,7 @@ Future<Map<String, dynamic>> _pageJson(String pageKey, {bool refresh = false}) a
   final spec = pageSpecs[pageKey];
   if (spec == null) return {'error': '未知页面：$pageKey'};
   final plan = await _pagePlan(pageKey, kTable, refresh: refresh);
-  final patcher = plan == null ? null : XlsxPatcher.open(await File(kTable).readAsBytes());
+  final patcher = plan == null ? null : _tablePatcher(kTable);
   final lists = patcher == null ? null : CardLists.from(patcher);
 
   // 选择格现在的值：子职要看主职业、亚种要看种族，所以先把值都读出来
@@ -1967,7 +2236,8 @@ const _formTitles = {
   'basic': '基本信息',
   'attrs': '属性与技能',
   'origin': '起源',
-  'gear': '装备与背包 · 武器',
+  'gear': '武器 / 护甲 / 盾',
+  'bag': '背包',
   'magic': '魔法物品',
 };
 
@@ -1979,6 +2249,74 @@ const _skillRows = <int, String>{
   59: '游说', 60: '欺瞒', 61: '威吓', 62: '表演',
 };
 const _attrRows = <int, String>{13: '力量', 14: '敏捷', 15: '体质', 16: '智力', 17: '感知', 18: '魅力'};
+
+/// 18 个技能的标准名字（卡里用的就是这一套），顺序 = 显示顺序
+const _skillNames = <String>[
+  '运动', '特技', '巧手', '隐匿', '调查', '奥秘', '历史', '自然', '宗教',
+  '察觉', '洞悉', '驯兽', '医药', '求生', '游说', '欺瞒', '威吓', '表演',
+];
+const _attrNames = <String>['力量', '敏捷', '体质', '智力', '感知', '魅力'];
+
+/// 从卡里认「六项属性」和「技能」各在哪几行。
+///
+/// 行号写死会踩别的版式，三个版本的技能表起止行都不一样：
+///
+/// | 卡 | 技能表 |
+/// |---|---|
+/// | `空白卡v1.1.1.xlsx`（当前基准）/ 悲灵 v1.1.1 | **40–61**（表头在 39） |
+/// | `空白卡v1.0.12.xlsx` | 41–62（表头在 40，上面还有一行「万事通」） |
+/// | `空白卡.xlsx` v1.0.0 / 米瑞尔 | **32–53** |
+///
+/// 拿 41–62 去读米瑞尔，读到的是法术块和属性分组标题，界面上就冒出一堆
+/// 「技能 / 关键属性 / 法术 / 职业归属 / 主职业 / 环阶」；往那张卡写技能熟练更糟——
+/// 以为在给「运动」打勾，实际落在了「自然」那一行。
+///
+/// 认法：C 列写着标准名、B 列是那个 `X/O` 熟练勾（空白卡的勾是空的，空也算）。
+/// 实在认不出来（怪版式）就退回写死的那一份，保证还能用。
+({Map<int, String> attrs, Map<int, String> skills}) _recognizeAttrAndSkills(XlsxPatcher p) {
+  String at(String col, int r) => p.cellText(kMainSheet, '$col$r').trim();
+  final attrs = <int, String>{};
+  final skills = <int, String>{};
+  for (var r = 1; r <= 250; r++) {
+    final mark = at('B', r);
+    if (mark.isNotEmpty && mark != 'X' && mark != 'O') continue;  // 不是熟练勾，跳过
+    final name = at('C', r);
+    if (name.isEmpty) continue;
+    if (_attrNames.contains(name)) {
+      if (!attrs.containsValue(name)) attrs[r] = name;
+    } else if (_skillNames.contains(name)) {
+      if (!skills.containsValue(name)) skills[r] = name;
+    }
+  }
+  if (attrs.length < _attrNames.length) {
+    attrs
+      ..clear()
+      ..addAll(_attrRows);
+  }
+  if (skills.isEmpty) {
+    skills
+      ..clear()
+      ..addAll(_skillRows);
+  }
+  return (attrs: attrs, skills: skills);
+}
+
+/// 装备 / 魔法物品那几块（武器 / 护甲 / 盾 / 奇物）的格子位置是按**新版式**写死的：
+/// 武器名 `B32:B36`、护甲名 `L40`、盾牌名 `AL40`、奇物名 `L42:L51`。
+/// v1.1.1 与 v1.0.12 这几块的位置一致（`装备` 表引用的还是 `主要!L40` / `P40` /
+/// `B32:B36` / `P42:P51`），所以这套格子两个版本都能用。
+///
+/// 老版式（`空白卡.xlsx` v1.0.0、米瑞尔那种）把这几块整块挤在 **L 列**（表头 `L32`），
+/// 位置完全不同——照写就会写到技能格上：`主要!B32` 在老卡上是「运动」的熟练勾，
+/// `B33` 是「敏捷」那个属性分组标题（都实测过）。
+///
+/// 认法：新版式「武器」块表头在 `B30`、「奇物」块表头在 `L41`。认不出来就别把这些
+/// 格子给出去——少一个页面，好过把数据写到别的地方。
+bool _gearBlocksRecognized(XlsxPatcher p) {
+  if (!p.hasSheet(kMainSheet)) return false;
+  return p.cellText(kMainSheet, 'B30').trim() == '武器' &&
+      p.cellText(kMainSheet, 'L41').trim() == '奇物';
+}
 
 /// 基本信息页的字段：格子先靠卡内公式认，认不出再用这一版卡固定的位置兜底。
 const _basicFallback = {
@@ -1995,16 +2333,6 @@ List<String> _cardOptions(XlsxPatcher p, String sheet, String cell, List<String>
   if (cell.isEmpty) return fallback;
   final v = p.validationOptions(sheet, cell);
   return v.isNotEmpty ? v : fallback;
-}
-
-/// 卡里的护甲清单：`装备` 表那张防具表的第一列（`主要!L40` 就是拿它 VLOOKUP 的）。
-List<String> _armorNames(XlsxPatcher p) {
-  final out = <String>[];
-  for (final v in p.columnValues('装备', 'AP', 12, 48).values) {
-    final t = v.trim();
-    if (t.isNotEmpty && !out.contains(t)) out.add(t);
-  }
-  return out;
 }
 
 /// 「属性与技能」那两块：六项属性 + 技能表。
@@ -2029,20 +2357,24 @@ List<FormField> _attrAndSkillFields(XlsxPatcher patcher) {
     );
   }
 
-  for (final e in _attrRows.entries) {
+  // 属性 / 技能各在哪几行都从卡里认：老版式卡技能表在 32–53 行，写死 41–62 会读错
+  final rs = _recognizeAttrAndSkills(patcher);
+  for (final e in rs.attrs.entries) {
     final r = e.key;
     final row = e.value;
     fields.add(f0('属性', '六项属性', 'label', 'C$r', row: row, col: 0));
-    fields.add(f0('熟练', '六项属性', 'toggle', 'B$r', options: const ['X', 'O'], row: row, col: 1));
+    // 这个勾不是"属性有熟练"，是**豁免**：卡里 `豁免 = 调整值 + IF(B="O", 熟练加值, 0) + 修正`。
+    // 所以叫「豁免」；右边 T 列那个算出来的结果改叫「豁免总值」，免得同一行两个「豁免」。
+    fields.add(f0('豁免', '六项属性', 'toggle', 'B$r', options: const ['X', 'O'], row: row, col: 1));
     fields.add(f0('初始值', '六项属性', 'number', 'I$r', row: row, col: 2));
     fields.add(f0('背景', '六项属性', 'number', 'K$r', row: row, col: 3));
     fields.add(f0('成长', '六项属性', 'number', 'M$r', row: row, col: 4));
     fields.add(f0('修正', '六项属性', 'number', 'O$r', row: row, col: 5));
     fields.add(f0('总值', '六项属性', 'readonly', 'F$r', row: row, col: 6));
     fields.add(f0('调整值', '六项属性', 'readonly', 'R$r', row: row, col: 7));
-    fields.add(f0('豁免', '六项属性', 'readonly', 'T$r', row: row, col: 8));
+    fields.add(f0('豁免总值', '六项属性', 'readonly', 'T$r', row: row, col: 8));
   }
-  for (final e in _skillRows.entries) {
+  for (final e in rs.skills.entries) {
     final r = e.key;
     final row = e.value;
     fields.add(f0('技能', '技能', 'label', 'C$r', row: row, col: 0));
@@ -2054,7 +2386,7 @@ List<FormField> _attrAndSkillFields(XlsxPatcher patcher) {
 }
 
 Future<List<FormField>?> _formFields(String key, String path) async {
-  if (key != 'basic' && key != 'attrs' && key != 'origin' && key != 'gear' && key != 'magic') {
+  if (key != 'basic' && key != 'attrs' && key != 'origin' && key != 'gear' && key != 'bag' && key != 'magic') {
     return null;
   }
   final f = File(path);
@@ -2063,7 +2395,7 @@ Future<List<FormField>?> _formFields(String key, String path) async {
   final stamp = '$key|$path|${st.modified.millisecondsSinceEpoch}|${st.size}';
   if (_formCache[key] != null && _formCacheKey[key] == stamp) return _formCache[key];
 
-  final patcher = XlsxPatcher.open(await f.readAsBytes());
+  final patcher = _tablePatcher(path) ?? XlsxPatcher.open(await f.readAsBytes());
 
   if (key == 'attrs') {
     final fields = _attrAndSkillFields(patcher);
@@ -2121,26 +2453,44 @@ Future<List<FormField>?> _formFields(String key, String path) async {
   }
 
   if (key == 'gear') {
-    // 武器块：卡里的「装备」表是拿 主要!B32 去 VLOOKUP 的，
-    // 所以名字写在 B32:B36（合并区 B32:E32 的左上角），
-    // 同调 F、加值 L、熟练 W 是玩家填的，攻击/伤害/精通/效果是卡算的。
+    // 「装备」这一页按卡自己的三块来，一块一张表：
+    //
+    //   武器   `B30` 表头，行 32–36（5 行）——名字 `B`（卡里 `装备!AU2` 就是拿它查表的），
+    //          同调 `F`、加值 `L`、熟练 `W`、弹药/充能计数 `AP` 是填的，
+    //          精通 `AN`、攻击 `Z`、伤害 `AB` 是卡算的（公式）。
+    //   护甲   `L38`「装备」块，行 40 左半——名字 `L40`（`装备!AZ12 = 主要!L40` 查防具表，
+    //          AC `AF40 = 装备!BA12 + U40`）、同调 `P40`、加值 `U40`，
+    //          AC `AF40`、敏捷加值 `AI40`、特性 `V40` 都是公式。
+    //   盾牌   行 40 右半——名字 `AL40`、同调 `AP40`、AC `AQ40`（卡里是手填的数字）、
+    //          **着装 `AS40`**。
+    //
+    // 以前把护甲 / 盾牌塞在武器那张表里接着排，列头对不上：护甲的「着装」其实写的是
+    // 盾牌那一格（`AS40`，卡里 `C23 = SUM(…, IF(AS40="是", AQ40, 0))` 管的是盾牌算不算 AC），
+    // 护甲的 AC 又跑到「攻击」列下面去了。
     const sh = kMainSheet;
     // 武器名候选：直接用卡里「装备」表自带的武器清单（跟阵营下拉一个思路），
     // 词条库那边的 equipment.json 没有 category，凑不出这份清单。
     final names = CardLists.weaponsFrom(patcher);
+    final equip = CardLists.equipNames(patcher);
     final fields = <FormField>[];
+    // 这几块的格子位置是按新版式写死的。老版式卡上位置不同，那就在字段上打
+    // `detected: false`（界面会标 ⚠），写入时服务器会拦住并如实报告——但**不删字段**。
+    final gearOk = _gearBlocksRecognized(patcher);
     FormField m(String label, String kind, String cell,
-        {String row = '', int col = 0, List<String> options = const []}) {
+        {String section = '武器',
+        String row = '',
+        int col = 0,
+        List<String> options = const []}) {
       final exists = _writable(patcher, cell) || _cellExists(patcher, cell);
       return FormField(
         field: 'gear_${cell}_$col',
         label: label,
-        section: '武器',
+        section: section,
         kind: kind,
         cell: cell,
         value: patcher.cellText(sh, cell),
         options: options,
-        detected: exists,
+        detected: gearOk && exists,
         sheet: sh,
         row: row,
         col: col,
@@ -2155,47 +2505,179 @@ Future<List<FormField>?> _formFields(String key, String path) async {
       fields.add(m('加值', 'number', 'L$r', row: row, col: 2));
       fields.add(m('熟练', 'toggle', 'W$r', row: row, col: 3,
           options: _cardOptions(patcher, sh, 'W$r', const ['X', 'O'])));
-      fields.add(m('攻击', 'readonly', 'Z$r', row: row, col: 4));
-      fields.add(m('伤害', 'readonly', 'AB$r', row: row, col: 5));
-      fields.add(m('精通', 'readonly', 'AN$r', row: row, col: 6));
-      fields.add(m('效果', 'readonly', 'AP$r', row: row, col: 7));
+      // 精通 `AN` / 攻击 `Z` / 伤害 `AB` 都是卡按武器名算出来的公式格，不是给人填的：
+      // 工具读不到算式的结果（卡没在 Excel 里打开存过一次，这些格就是空的），
+      // 摆出来只会是一列空白，还让人以为该填。所以只有真能写的格才摆。
+      if (patcher.isWritableCell(sh, 'AN$r')) {
+        fields.add(m('精通', 'text', 'AN$r', row: row, col: 4));
+      }
+      if (patcher.isWritableCell(sh, 'Z$r')) {
+        fields.add(m('攻击', 'number', 'Z$r', row: row, col: 5));
+      }
+      if (patcher.isWritableCell(sh, 'AB$r')) {
+        fields.add(m('伤害', 'text', 'AB$r', row: row, col: 6));
+      }
+      // 「弹药/充能」也一样：v1.1.1 的 `AP31` 表头是「弹药/充能计数」（能填），
+      // 老版式（v1.0.12 / 悲灵）同一列的 `AP31` 是「效果」、`AP32` 是精通说明的公式 ——
+      // 照着格子摆一个输入框，一填就把卡里那条公式盖掉了。
+      if (patcher.isWritableCell(sh, 'AP$r')) {
+        fields.add(m('弹药/充能', 'number', 'AP$r', row: row, col: 7));
+      }
     }
-    // 护甲（行 40）：名称 L40（卡里 `装备!AU12 = 主要!L40` 就是读这一格去查防具表的）
-    // / 同调 P40 / 加值 U40 / 着装 AS40，AC 与特性是卡算的，只读
-    final armors = _armorNames(patcher);
-    fields.add(m('护甲名', 'text', 'L40', row: '护甲', col: 0, options: armors));
-    fields.add(m('同调', 'toggle', 'P40', row: '护甲', col: 1,
+    // 护甲：卡里 40 行左半那张表
+    fields.add(m('护甲名', 'text', 'L40', section: '护甲', row: '护甲', col: 0,
+        options: equip.armors));
+    fields.add(m('同调', 'toggle', 'P40', section: '护甲', row: '护甲', col: 1,
         options: _cardOptions(patcher, sh, 'P40', const ['X', 'O'])));
-    fields.add(m('加值', 'number', 'U40', row: '护甲', col: 2));
-    fields.add(m('着装', 'toggle', 'AS40', row: '护甲', col: 3,
-        options: _cardOptions(patcher, sh, 'AS40', const ['是', '否'])));
-    fields.add(m('AC', 'readonly', 'AF40', row: '护甲', col: 4));
-    fields.add(m('特性', 'readonly', 'V40', row: '护甲', col: 5));
-    // 盾牌：名称 AL40 / 同调 AP40 / AC AQ40 / 着装 AS40
-    fields.add(m('盾牌名', 'text', 'AL40', row: '盾牌', col: 0, options: armors));
-    fields.add(m('同调', 'toggle', 'AP40', row: '盾牌', col: 1,
+    fields.add(m('加值', 'number', 'U40', section: '护甲', row: '护甲', col: 2));
+    // AC `AF40` / 敏捷加值 `AI40` / 特性 `V40` 同理：卡按护甲名 + 敏捷算的，不用填
+    if (patcher.isWritableCell(sh, 'AF40')) {
+      fields.add(m('AC', 'number', 'AF40', section: '护甲', row: '护甲', col: 3));
+    }
+    if (patcher.isWritableCell(sh, 'AI40')) {
+      fields.add(m('敏捷加值', 'number', 'AI40', section: '护甲', row: '护甲', col: 4));
+    }
+    if (patcher.isWritableCell(sh, 'V40')) {
+      fields.add(m('特性', 'text', 'V40', section: '护甲', row: '护甲', col: 5));
+    }
+    // 盾牌：卡里 40 行右半那张表（着装是盾牌这一格，不是护甲的）
+    fields.add(m('盾牌名', 'text', 'AL40', section: '盾牌', row: '盾牌', col: 0,
+        options: equip.shields));
+    fields.add(m('同调', 'toggle', 'AP40', section: '盾牌', row: '盾牌', col: 1,
         options: _cardOptions(patcher, sh, 'AP40', const ['X', 'O'])));
-    fields.add(m('AC', 'number', 'AQ40', row: '盾牌', col: 2));
-    fields.add(m('着装', 'toggle', 'AS40', row: '盾牌', col: 3,
+    fields.add(m('AC', 'number', 'AQ40', section: '盾牌', row: '盾牌', col: 2));
+    fields.add(m('着装', 'toggle', 'AS40', section: '盾牌', row: '盾牌', col: 3,
         options: _cardOptions(patcher, sh, 'AS40', const ['是', '否'])));
-    // 负重 / 货币（行 60–61）：这几格是卡里按背包算好的，只读展示
-    // T61 / Y61 是标签格，值在下一行（T62 钱包、Y62 最大载重）
-    fields.add(m('背包1 负重', 'readonly', 'P60', row: '负重', col: 0));
-    fields.add(m('背包2 负重', 'readonly', 'T60', row: '负重', col: 1));
-    fields.add(m('总负重', 'readonly', 'Y60', row: '负重', col: 2));
-    fields.add(m('钱包', 'readonly', 'T62', row: '负重', col: 3));
-    fields.add(m('最大载重', 'readonly', 'Y62', row: '负重', col: 4));
+    _formCache[key] = fields;
+    _formCacheKey[key] = stamp;
+    return fields;
+  }
+
+  if (key == 'bag') {
+    // 「背包」这一页只写卡里 `背包` 表那几块存货格子；武器 / 护甲 / 盾是**另一批格子**，
+    // 在「武器 / 护甲 / 盾」那一页，两边不重叠。
+    //
+    // 几个存货区是**认出来的**：卡里给「稀有度」配了一串下拉
+    // （`普通,非普通,珍稀,极珍稀,传说,神器`），它的 sqref 正好只盖住真正的存货格
+    // ——v1.1.1 和悲灵都是 `AC5:AD14`、`AC16:AD25`、`AC29:AD38`、`AC40:AD49`。
+    // 拿这些范围切区块，表头行 = 区块上面那一行，按表头文字找「名称 / 描述 / lb / 数量」列；
+    // 区块往上第一个非空的「名称」格就是背包自己的名字（背包1 / 次元袋…）。换版式不用改代码。
+    const sh = '背包';
+    final fields = <FormField>[];
+    final perCol = <String, List<int>>{};
+    for (final r in patcher.validationRanges(sh, '非普通')) {
+      final m = RegExp(r'^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$').firstMatch(r);
+      if (m == null) continue;
+      final r1 = int.parse(m.group(2)!);
+      final r2 = m.group(4) != null ? int.parse(m.group(4)!) : r1;
+      (perCol[m.group(1)!] ??= []).addAll([for (var i = r1; i <= r2; i++) i]);
+    }
+    if (perCol.isNotEmpty) {
+      final rar = perCol.entries.reduce((a, b) => b.value.length > a.value.length ? b : a);
+      final rows = rar.value.toSet().toList()..sort();
+      final blocks = <List<int>>[];
+      for (final r in rows) {
+        if (blocks.isNotEmpty && r == blocks.last.last + 1) {
+          blocks.last.add(r);
+        } else {
+          blocks.add([r]);
+        }
+      }
+      // 表头行里按文字找列：只认离稀有度列最近的那一个（同一行别处也有「lb」之类）
+      String nearCol(int headerRow, List<String> names, {required bool right}) {
+        final want = colNum(rar.key);
+        String best = '';
+        var bestD = 1 << 20;
+        for (final c in patcher.cells(sh)) {
+          if (c.row != headerRow) continue;
+          if (!names.contains((patcher.cellValue(sh, c) ?? '').trim())) continue;
+          final d = colNum(c.column) - want;
+          if (right ? d < 0 : d > 0) continue;
+          if (d.abs() < bestD) {
+            bestD = d.abs();
+            best = c.column;
+          }
+        }
+        return best;
+      }
+      final seen = <String, int>{};
+      for (final blk in blocks) {
+        final headerRow = blk.first - 1;
+        final nameCol = nearCol(headerRow, const ['名称'], right: false);
+        if (nameCol.isEmpty) continue;
+        final descCol = nearCol(headerRow, const ['描述'], right: true);
+        final lbCol = nearCol(headerRow, const ['lb', '磅', '重量'], right: true);
+        final qtyCol = nearCol(headerRow, const ['数量'], right: true);
+        var title = '';
+        for (var r = headerRow - 1; r >= 1 && title.isEmpty; r--) {
+          final t = patcher.cellText(sh, '$nameCol$r').trim();
+          if (t.isNotEmpty && t != '名称') title = t;
+        }
+        if (title.isEmpty) title = '背包';
+        seen[title] = (seen[title] ?? 0) + 1;
+        final section = seen[title]! > 1 ? '$title（${seen[title]}）' : title;
+        var n = 0;
+        for (final r in blk) {
+          n++;
+          final row = '第 $n 件';
+          FormField f(String label, String cell, String kind, int col, {List<String> options = const []}) =>
+              FormField(
+                field: 'bag_${cell}_$col',
+                label: label,
+                section: section,
+                kind: kind,
+                cell: cell,
+                value: patcher.cellText(sh, cell),
+                options: options,
+                detected: patcher.isWritableCell(sh, cell),
+                sheet: sh,
+                row: row,
+                col: col,
+              );
+          fields.add(f('名称', '$nameCol$r', 'text', 0));
+          fields.add(f('稀有度', '${rar.key}$r', 'select', 1,
+              options: _cardOptions(patcher, sh, '${rar.key}$r', const [])));
+          if (descCol.isNotEmpty) fields.add(f('描述', '$descCol$r', 'text', 2));
+          if (lbCol.isNotEmpty) fields.add(f('lb', '$lbCol$r', 'number', 3));
+          if (qtyCol.isNotEmpty) fields.add(f('数量', '$qtyCol$r', 'number', 4));
+        }
+      }
+    }
+    if (fields.isEmpty) {
+      // 认不出来就问清楚（老版式卡没有「稀有度」那串下拉，切不出区块）。
+      // 宁可在页面上说一句，也不要给一个空白页让人以为卡坏了。
+      fields.add(FormField(
+        field: 'bag_unrecognized',
+        label: '没认出这张卡的背包格子',
+        section: '背包',
+        kind: 'readonly',
+        cell: '',
+        value: '卡里 `背包` 表的「稀有度」列没有配下拉（老版式卡就没有），'
+            '认不出存货区在哪几行，所以这页先不给格子 —— 用新模板新卡会有。',
+        options: const [],
+        sheet: sh,
+        detected: true,
+      ));
+    }
     _formCache[key] = fields;
     _formCacheKey[key] = stamp;
     return fields;
   }
 
   if (key == 'magic') {
-    // 魔法物品就是「主要」表里那几块带同调的格子：
-    //   武器 行 32–36（名称 B / 同调 F）、护甲行 40（名称 Q / 同调 P）、
-    //   奇物 行 42–51（名称 L / 同调 P / 稀有度 R / 部位 U），特性都是卡算的只读列。
+    // 「魔法物品」这一页只放卡里属于它的两块：
+    //
+    //   奇物   `L41` 表头（v1.1.1 行 42–50 九行）——名称 `L`、同调 `P`、
+    //          稀有度 `R`（卡里那张 普通/非普通/… 下拉是 `R42:T50`）、部位 `U`、特性 `W`
+    //   消耗品 `L51` 表头（行 52–56 五行）——名称 `L`、稀有度 `R`、描述 `U`、数量 `AP`
+    //
+    // 武器 / 护甲 / 盾 属于「装备」那一页（写的是同一批格子），不在这里再抄一遍——
+    // 两边都摆一遍，改哪边都一样、读卡还会把同一件东西读出来两次。
     const sh = kMainSheet;
     final fields = <FormField>[];
+    // 跟装备页同一个道理：老版式卡上这几块位置不同 → 字段照样给（界面别缺东西），
+    // 但打上 `detected: false`，写入时服务器拦住并如实报告，不会写到技能格上。
+    final gearOk = _gearBlocksRecognized(patcher);
     FormField m(String label, String kind, String cell,
         {String section = '奇物', String row = '', int col = 0, List<String> options = const []}) {
       return FormField(
@@ -2206,52 +2688,42 @@ Future<List<FormField>?> _formFields(String key, String path) async {
         cell: cell,
         value: patcher.cellText(sh, cell),
         options: options,
-        detected: _writable(patcher, cell) || _cellExists(patcher, cell),
+        detected: gearOk && (_writable(patcher, cell) || _cellExists(patcher, cell)),
         sheet: sh,
         row: row,
         col: col,
       );
     }
 
-    final rarity = patcher.validationOptions(sh, 'R42');
-    final attuneOpts = _cardOptions(patcher, sh, 'P42', const ['X', 'O']);
-    final dressOpts = _cardOptions(patcher, sh, 'AS40', const ['是', '否']);
-    // 武器 / 护甲 / 盾 的「含同调」那几行：名字 + 同调都在这页管，跟卡里的块一一对应
-    final weaponNames = CardLists.weaponsFrom(patcher);
-    final armors = _armorNames(patcher);
+    // 奇物那一块有多少格从卡里认：v1.0.12 是 L42:L51（10 格），v1.1.1 是 L42:L50
+    // （9 格，L51 已经是「消耗品」的表头）。写死 10 格会把表头当第 10 件奇物。
+    final curioBlock = _magicItemBlock(patcher);
+    final firstCurio = curioBlock.startRow;
+    final rarity = patcher.validationOptions(sh, 'R$firstCurio');
+    final attuneOpts = _cardOptions(patcher, sh, 'P$firstCurio', const ['X', 'O']);
     // 奇物名的候选：词条库里的 307 条魔法物品（跟上面那个「魔法物品速查」同一份数据）
     final curios = repo.ofType('magicItem').map((e) => e.name).toList()..sort();
-    for (var r = 32; r <= 36; r++) {
-      final row = '第 ${r - 31} 件';
-      fields.add(m('武器名', 'text', 'B$r', section: '武器（含同调）', row: row, col: 0,
-          options: weaponNames));
-      fields.add(m('同调', 'toggle', 'F$r', section: '武器（含同调）', row: row, col: 1,
-          options: attuneOpts));
-    }
-    fields.add(m('护甲名', 'text', 'L40', section: '护甲 / 盾', row: '护甲', col: 0,
-        options: armors));
-    fields.add(m('同调', 'toggle', 'P40', section: '护甲 / 盾', row: '护甲', col: 1,
-        options: attuneOpts));
-    fields.add(m('加值', 'number', 'U40', section: '护甲 / 盾', row: '护甲', col: 2));
-    fields.add(m('着装', 'toggle', 'AS40', section: '护甲 / 盾', row: '护甲', col: 3,
-        options: dressOpts));
-    fields.add(m('AC', 'readonly', 'AF40', section: '护甲 / 盾', row: '护甲', col: 4));
-    fields.add(m('盾牌名', 'text', 'AL40', section: '护甲 / 盾', row: '盾牌', col: 0,
-        options: armors));
-    fields.add(m('同调', 'toggle', 'AP40', section: '护甲 / 盾', row: '盾牌', col: 1,
-        options: attuneOpts));
-    fields.add(m('AC', 'number', 'AQ40', section: '护甲 / 盾', row: '盾牌', col: 2));
-    fields.add(m('着装', 'toggle', 'AS40', section: '护甲 / 盾', row: '盾牌', col: 3,
-        options: dressOpts));
-    for (var r = 42; r <= 51; r++) {
-      final row = '第 ${r - 41} 件';
-      fields.add(m('奇物名', 'text', 'L$r', row: row, col: 0, options: curios));
+    for (var r = curioBlock.startRow; r <= curioBlock.endRow; r++) {
+      final row = '第 ${r - firstCurio + 1} 件';
+      fields.add(m('奇物名', 'text', '${curioBlock.column}$r', row: row, col: 0, options: curios));
       fields.add(m('同调', 'toggle', 'P$r', row: row, col: 1,
           options: attuneOpts));
       fields.add(m('稀有度', 'select', 'R$r', row: row, col: 2, options: rarity));
       fields.add(m('部位', 'text', 'U$r', row: row, col: 3));
       // 特性那一列：卡里是公式就是只读（卡自己算），空白的就让你自己写
       fields.add(m('特性', _writable(patcher, 'W$r') ? 'text' : 'readonly', 'W$r', row: row, col: 4));
+    }
+    // 消耗品：卡里紧挨着奇物的另一块（名称 / 稀有度 / 描述 / 数量）
+    final consumables = _consumableBlock(patcher);
+    if (consumables != null) {
+      for (var r = consumables.startRow; r <= consumables.endRow; r++) {
+        final row = '第 ${r - consumables.startRow + 1} 件';
+        fields.add(m('名称', 'text', '${consumables.column}$r',
+            section: '消耗品', row: row, col: 0));
+        fields.add(m('稀有度', 'select', 'R$r', section: '消耗品', row: row, col: 1, options: rarity));
+        fields.add(m('描述', 'text', 'U$r', section: '消耗品', row: row, col: 2));
+        fields.add(m('数量', 'number', 'AP$r', section: '消耗品', row: row, col: 3));
+      }
     }
     _formCache[key] = fields;
     _formCacheKey[key] = stamp;
@@ -2318,7 +2790,7 @@ Future<List<FormField>?> _formFields(String key, String path) async {
 
   FormField mk(String field, String label, String section, String kind, String cell,
           {List<String> options = const [],
-          bool detected = false,
+          bool? detected,
           String parent = '',
           Map<String, List<String>> optionsByParent = const {},
           String sheet = kMainSheet}) =>
@@ -2330,7 +2802,10 @@ Future<List<FormField>?> _formFields(String key, String path) async {
         cell: cell,
         value: cell.isEmpty ? '' : patcher.cellText(sheet, cell),
         options: options,
-        detected: detected,
+        // 没明说「识别到没有」的字段（角色名 / 玩家 / 经验值 / 兼职 / 阵营 / 信仰）
+        // 按格子自己判断：找得到且能写就是认出来了。以前这里默认 false，界面于是
+        // 给这些字段永远挂一个 ⚠，看着像没认出来，其实写入是正常的。
+        detected: detected ?? (cell.isNotEmpty && patcher.isWritableCell(sheet, cell)),
         parent: parent,
         optionsByParent: optionsByParent,
         sheet: sheet,
@@ -2373,19 +2848,13 @@ Future<List<FormField>?> _formFields(String key, String path) async {
 /// 能写吗：格子要存在，而且不能是公式（公式格是卡自己算的，不能覆盖）
 bool _writable(XlsxPatcher patcher, String cell) {
   if (cell.isEmpty) return false;
-  for (final c in scanCells(patcher.sheetXml(kMainSheet))) {
-    if (c.ref == cell.toUpperCase()) return !c.hasFormula;
-  }
-  return false;
+  return patcher.isWritableCell(kMainSheet, cell);
 }
 
 /// 格子在不在（只读展示用，公式格也算存在）
 bool _cellExists(XlsxPatcher patcher, String cell) {
   if (cell.isEmpty) return false;
-  for (final c in scanCells(patcher.sheetXml(kMainSheet))) {
-    if (c.ref == cell.toUpperCase()) return true;
-  }
-  return false;
+  return patcher.hasCell(kMainSheet, cell);
 }
 
 Future<Map<String, dynamic>> _formJson(String key, {bool refresh = false}) async {
@@ -2419,15 +2888,10 @@ Future<Map<String, dynamic>> _formJson(String key, {bool refresh = false}) async
 Map<String, int> _templateHeadLen(XlsxPatcher tpl) {
   final out = <String, int>{};
   for (final key in ['class', 'species', 'feat', 'magic']) {
-    final spec = pageSpecs[key];
-    if (spec == null) continue;
-    var bs = tpl.linkedBlocks(sheet: spec.drivingSheet, sourceSheet: kMainSheet, minRun: 3);
-    if (bs.isEmpty) bs = tpl.linkedBlocks(sourceSheet: kMainSheet, minRun: 3);
-    if (key == 'magic') bs = [_magicItemBlock(tpl)];
-    if (bs.isEmpty) continue;
-    bs.sort((a, b) => b.slots.compareTo(a.slots));
+    final b = _templateBlock(tpl, key);
+    if (b == null) continue;
     var n = 0;
-    for (final c in bs.first.cells) {
+    for (final c in b.cells) {
       if (tpl.cellText(kMainSheet, c).trim().isEmpty) break;
       n++;
     }
@@ -2436,12 +2900,38 @@ Map<String, int> _templateHeadLen(XlsxPatcher tpl) {
   return out;
 }
 
+/// 基准卡里这一页对应的名称输入列（跟服务端认目标卡用的是同一套识别）
+SpellBlock? _templateBlock(XlsxPatcher tpl, String key) {
+  final spec = pageSpecs[key];
+  if (spec == null) return null;
+  var bs = tpl.linkedBlocks(sheet: spec.drivingSheet, sourceSheet: kMainSheet, minRun: 3);
+  if (bs.isEmpty) bs = tpl.linkedBlocks(sourceSheet: kMainSheet, minRun: 3);
+  if (key == 'magic') bs = [_magicItemBlock(tpl)];
+  if (bs.isEmpty) return null;
+  bs.sort((a, b) => b.slots.compareTo(a.slots));
+  return bs.first;
+}
+
+/// 「目标卡这一块开头有几格是卡自己的结构」。
+///
+/// 只有当目标卡的块和基准卡的块**位置一致**（同列同起始行）时才认——认得出的
+/// 情况下两边的结构行也一致；对不上就返回 0，宁可多读几条，也别把玩家的词条吃掉。
+int _headLenFor(XlsxPatcher? tpl, String key, SpellBlock? block) {
+  if (tpl == null || block == null) return 0;
+  final tb = _templateBlock(tpl, key);
+  if (tb == null || tb.column != block.column || tb.startRow != block.startRow) return 0;
+  return _templateHeadLen(tpl)[key] ?? 0;
+}
+
 /// 换卡（换目标表）之后，所有按表缓存的都得丢掉：
 /// 表信息、各表单、各词条页的槽位识别结果都属于"上一张卡"。
 void _dropTableCaches() {
   _tableCacheKey = '';
   _formCacheKey.clear();
   _pageCacheKey.clear();
+  // 目标表的解析结果也一起丢：卡刚被写过，重新解一份才读得到新值
+  _tablePatcherCache = null;
+  _tablePatcherKey = '';
 }
 
 Future<String?> _setTable(String path, {bool mustExist = true}) async {
@@ -2454,6 +2944,7 @@ Future<String?> _setTable(String path, {bool mustExist = true}) async {
   return null;
 }
 
+/// 从空白模板复制一张新卡。
 /// 用模板新建一张表；成功返回 null，失败返回原因
 Future<String?> _createFromTemplate(String target, {required bool overwrite}) async {
   final path = p.normalize(target);

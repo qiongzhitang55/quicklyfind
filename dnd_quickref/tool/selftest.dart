@@ -11,14 +11,36 @@ import 'package:dnd_quickref/data/card_lists.dart';
 import 'package:dnd_quickref/data/repository.dart';
 import 'package:dnd_quickref/models/entry.dart';
 import 'package:dnd_quickref/staging/tray.dart';
+import 'package:dnd_quickref/util/text.dart';
 import 'package:dnd_quickref/xlsx/patcher.dart';
 import 'package:path/path.dart' as p;
 
 late final String workspace = p.dirname(p.dirname(p.dirname(Platform.script.toFilePath())));
 late final String dataDir = p.join(workspace, 'dnd-data');
 late final String cardPath = p.join(workspace, 'card', '悲灵.xlsx');
-late final String templatePath = p.join(workspace, 'card', '空白卡.xlsx');
+/// 模板 = `card\空白卡*.xlsx` 里版本号最高的那一份（跟服务端 `_pickTemplate` 一个口径）
+late final String templatePath = _newestTemplate(p.join(workspace, 'card'));
 late final String outPath = p.join(workspace, '实验区', 'out', '_selftest_filled.xlsx');
+
+String _newestTemplate(String cardDir) {
+  var best = '';
+  var bestKey = -1;
+  for (final f in Directory(cardDir).listSync().whereType<File>()) {
+    final name = p.basename(f.path);
+    if (!name.toLowerCase().endsWith('.xlsx') || !name.startsWith('空白卡')) continue;
+    final m = RegExp(r'v(\d+)\.(\d+)(?:\.(\d+))?').firstMatch(name);
+    final key = m == null
+        ? 0
+        : int.parse(m.group(1)!) * 10000 +
+            int.parse(m.group(2)!) * 100 +
+            int.parse(m.group(3) ?? '0');
+    if (key > bestKey) {
+      bestKey = key;
+      best = f.path;
+    }
+  }
+  return best;
+}
 
 int failures = 0;
 int checks = 0;
@@ -51,10 +73,16 @@ Future<void> main() async {
   final repo = await Repository.load(dataDir);
   final counts = repo.typeCounts();
   stdout.writeln('载入词条: ${repo.entries.length} 条  $counts\n');
-  check('载入五类词条', counts.length == 5, counts.keys.join('、'));
+  check('载入六类词条（含装备）', counts.length == 6, counts.keys.join('、'));
   check('魔法物品词条 > 250', (counts['magicItem'] ?? 0) > 250, '${counts['magicItem']}');
   check('法术词条数 > 700', (counts['spell'] ?? 0) > 700, '${counts['spell']}');
   check('id 全局唯一', repo.byId.length == repo.entries.length);
+  // 装备这一类的 id 必须是 `equipment:名字`：装备表单里点武器 / 护甲的名字时，
+  // 前端就是照这个拼 id 去 /api/entry 取词条来弹悬浮窗的。
+  final sword = repo.byId['equipment:长剑'];
+  check('装备能按 equipment:名字 取到（点武器名要弹悬浮窗）',
+      counts['equipment'] == 239 && sword != null && sword.fields['伤害'] == '1d8',
+      '装备 ${counts['equipment']} 条；长剑 伤害=${sword?.fields['伤害']}');
 
   // ---------------------------------------------------------------- 检索
   final fireball = repo.search(type: 'spell', q: '火球术');
@@ -147,6 +175,49 @@ Future<void> main() async {
   final tpl = XlsxPatcher.open(File(templatePath).readAsBytesSync());
   final tplBlocks = tpl.spellBlocks();
   check('空白模板也能认出法术位', tplBlocks.length == 4, tplBlocks.map((b) => b.range).join('、'));
+
+  // 基准空白卡本身必须是「空的」：玩家 / 角色名 / 职业 / 经验都不该预填，
+  // 标题也不该还顶着作者的署名（作者署名留在「更新」表里，那是出处）。
+  stdout.writeln('     基准空白卡: ${p.basename(templatePath)}');
+  check('基准空白卡 = 版本号最高的那一份（v1.1.1）',
+      p.basename(templatePath) == '空白卡v1.1.1.xlsx', p.basename(templatePath));
+  check('空白卡里「角色名 / 玩家 / 主职业 / 等级格外的经验值」都是空的',
+      ['E3', 'E4', 'E6', 'E9'].every((c) => tpl.cellText('主要', c).trim().isEmpty),
+      ['E3', 'E4', 'E6', 'E9'].map((c) => '$c=${tpl.cellText('主要', c)}').join(' '));
+  check('空白卡的标题不再带作者署名', !tpl.cellText('主要', 'A1').contains('悲灵'),
+      tpl.cellText('主要', 'A1'));
+  check('空白卡的出身是卡自己的「没选出身」状态',
+      tpl.cellText('起源', 'E6').trim() == '自定义背景', tpl.cellText('起源', 'E6'));
+
+  // 技能 / 属性表的位置三个版本都不一样（v1.1.1 技能表 40–61、v1.0.12 41–62、
+  // v1.0.0 32–53），服务端是**从卡里认**的。这里照同一个认法验一遍基准卡。
+  const skillNames = [
+    '运动', '特技', '巧手', '隐匿', '调查', '奥秘', '历史', '自然', '宗教',
+    '察觉', '洞悉', '驯兽', '医药', '求生', '游说', '欺瞒', '威吓', '表演',
+  ];
+  const attrNames = ['力量', '敏捷', '体质', '智力', '感知', '魅力'];
+  final tplSkills = <int, String>{};
+  final tplAttrs = <int, String>{};
+  for (var r = 1; r <= 250; r++) {
+    final mark = tpl.cellText('主要', 'B$r').trim();
+    if (mark.isNotEmpty && mark != 'X' && mark != 'O') continue;
+    final name = tpl.cellText('主要', 'C$r').trim();
+    if (name.isEmpty) continue;
+    if (attrNames.contains(name)) {
+      tplAttrs.putIfAbsent(r, () => name);
+    } else if (skillNames.contains(name)) {
+      tplSkills.putIfAbsent(r, () => name);
+    }
+  }
+  stdout.writeln('     基准卡技能行: ${tplSkills.entries.map((e) => 'C${e.key}=${e.value}').join('、')}');
+  check('基准卡认出 18 项技能（运动在 40 行、表演在 61 行）',
+      tplSkills.length == 18 && tplSkills[40] == '运动' && tplSkills[61] == '表演',
+      '${tplSkills.length} 项');
+  check('基准卡认出六项属性（13–18 行）',
+      tplAttrs.length == 6 && tplAttrs[13] == '力量' && tplAttrs[18] == '魅力',
+      '${tplAttrs.length} 项');
+  check('基准卡的装备 / 奇物格子认得出来（B30=武器、L41=奇物）',
+      tpl.cellText('主要', 'B30').trim() == '武器' && tpl.cellText('主要', 'L41').trim() == '奇物');
 
   // ---------------------------------------------------------------- 职业页
   // 职业页要写的东西全在「主要」表，靠卡内公式认位置（换卡版本也不用改代码）
@@ -279,11 +350,35 @@ Future<void> main() async {
   check('武器清单来自卡（表头「名称」那一列）',
       lists.weapons.contains('长剑') && lists.weapons.length > 20,
       '${lists.weapons.length} 个: ${lists.weapons.take(8).join('、')}');
+  final equip = CardLists.equipNames(XlsxPatcher.open(cardBytes));
+  check('护甲清单来自卡（表头「装备名称」列，`护甲名称` 小标题之后）',
+      equip.armors.contains('链甲') && equip.armors.length > 5 &&
+          !equip.armors.contains('轻型') && !equip.armors.contains('双手'),
+      '${equip.armors.length} 个: ${equip.armors.take(8).join('、')}');
+  check('盾牌清单来自卡（就一个「盾牌」，不是武器的词条列）',
+      equip.shields.join('、') == '盾牌', equip.shields.join('、'));
   check('出身下拉只放核心那一份（16 条，扩展书的不进下拉）',
       lists.backgrounds.length == 16 &&
           lists.backgrounds.first == '侍僧' &&
           !lists.backgrounds.contains('巨人养子'),
       '${lists.backgrounds.length} 个: ${lists.backgrounds.join('、')}');
+
+  // ---------------------------------------------------------------- 工具熟练 / 语言该不该进值格
+  // 规则书给的很常是一句"要你自己挑"的指令，抄进卡里的值格就是脏数据（O4）。
+  const concrete = ['书法工具', '织布工具', '易容工具。', '龙语', '巨人语', '通用语'];
+  const menuTexts = [
+    '选择一种工匠工具（参见第六章）', '选择一种乐器', '选择一种赌具（见第六章）',
+    '自选一套赌具', '一种乐器或一种工匠工具', '一种匠人工具。', '一种工匠工具',
+    '一门你自选的语言', '任选一门语言', '自选两门语言', '两项你选择的语言', '两个所选语言。',
+    '一项你自选的语言', '任何一门你自选的语言', '懂所有生前掌握的语言但不能说',
+    '理解你所说的语言', '理解你的语言', '——', '-', '  ',
+  ];
+  final wrongConcrete = concrete.where((t) => !isConcreteAssignment(t)).toList();
+  final wrongMenu = menuTexts.where(isConcreteAssignment).toList();
+  check('工具 / 语言：具体名字认得出来（不会被当指令拦掉）',
+      wrongConcrete.isEmpty, '被误拦: ${wrongConcrete.join('、')}');
+  check('工具 / 语言：「要你自己挑」的指令句不会被写进值格',
+      wrongMenu.isEmpty, '漏拦: ${wrongMenu.join('、')}');
 
   stdout.writeln('\n$checks 项检查，$failures 项失败');
   exit(failures == 0 ? 0 : 1);

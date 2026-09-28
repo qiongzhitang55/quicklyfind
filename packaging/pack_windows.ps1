@@ -16,6 +16,10 @@
 #   3 doc file name copied into the package
 #   4 browser-mode .bat name copied into the package
 #   5 card template glob copied from card\ into the package
+#     (only the current baseline template ships: bump this to
+#      "空白卡vX.Y.Z.xlsx" whenever card\ gets a newer blank card --
+#      quickref.exe picks the newest 空白卡*.xlsx it finds, but the
+#      package should stay small; old templates are reference only)
 #
 # Switches:
 #   -SkipServer   do not recompile quickref.exe (reuse the one already in the package folder)

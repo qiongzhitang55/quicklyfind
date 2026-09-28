@@ -4,13 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>法术速查填表</title>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
-<header>
-  <!-- 顶上这一条是「车卡进度」：哪些填了、哪些还没填、还能选什么（点一下跳过去） -->
-  <div class="progress" id="stat"></div>
-</header>
 <div id="staleWarn" class="stale" hidden>
   服务端还是旧版本：请关掉那个黑色启动窗口，重新双击 <b>实验区\start.bat</b> 再刷新本页。
 </div>
@@ -21,7 +17,7 @@
   <div class="vs" id="splitTree" title="拖动调整设计树宽度"></div>
 
   <main>
-   <!-- 法术页：左列表 / 中详情（抓到的法术进最右边的备选区） -->
+   <!-- 法术页：左列表（悬停/点一条看效果悬浮窗）/ 中「已选法术」（抓的仍进最右的备选区） -->
    <div class="view" id="viewSpell">
     <!-- ① 左：法术列表 -->
   <section class="pane pane-list">
@@ -36,15 +32,15 @@
     <div id="list" class="list"></div>
   </section>
 
-  <!-- ② 中：法术详情 -->
+  <!-- ② 中：已选法术（效果在悬浮窗里看；写表还是走右下角备选区） -->
   <div class="hv hv-list" title="拖动调整列表宽度"></div>
   <section class="pane pane-detail" id="detail">
-    <div class="empty">从左边点一个法术，这里显示完整规则</div>
+    <div class="empty">左边点一个法术，效果在悬浮窗里看；这里列你选进备选区的法术。</div>
   </section>
 
    </div>
 
-   <!-- 职业页：左特性列表 / 中详情（都写在「主要」表里，抓的进备选区） -->
+   <!-- 职业页：左特性列表（悬停/点一条看效果悬浮窗）/ 中：页面内容或「已选」 -->
    <div class="view" id="viewClass" hidden>
      <section class="pane pane-list">
        <div class="pane-head">
@@ -62,7 +58,7 @@
 
      <div class="hv hv-list" title="拖动调整列表宽度"></div>
      <section class="pane pane-detail" id="cfDetail">
-       <div class="empty">从左边点一条职业特性，这里显示完整规则</div>
+       <div class="empty">左边点一条，效果在悬浮窗里看。</div>
      </section>
 
    </div>
@@ -76,11 +72,13 @@
        </div>
        <!-- 速查（魔法物品页）：规则书里的词条，抓进最右边的备选区，再从那儿写进表 -->
        <div class="lookup" id="fmLookup" hidden>
-         <div class="lk-head">
-           <input id="lkQ" type="search" placeholder="速查魔法物品（名称 / 英文名 / 正文）…" autocomplete="off">
-           <span class="count" id="lkCount">—</span>
-           <button id="lkClear" class="link">清空筛选</button>
-         </div>
+        <div class="lk-head">
+          <input id="lkQ" type="search" placeholder="速查魔法物品（名称 / 英文名 / 正文）…" autocomplete="off">
+          <span class="count" id="lkCount">—</span>
+          <button id="lkClear" class="link">清空筛选</button>
+        </div>
+        <!-- 规则配额（同调最多 3 件）：只提示，不拦 -->
+        <div class="quota quota-lk" id="lkQuota"></div>
          <div class="filters" id="lkFilters"></div>
          <div id="lkList" class="lk-list"></div>
          <div class="rz rz-e" id="lkResizeE" title="拖动调整宽度"></div>
@@ -91,6 +89,11 @@
    </div>
 
    <!-- 其它节点：先放空白占位 -->
+   <!-- 致谢：人物卡的作者与联系方式（从卡里的「更新」表读）+ 规则数据来源 -->
+   <div class="view" id="viewThanks" hidden>
+     <div class="thanks" id="thanksBody"></div>
+   </div>
+
    <div class="view" id="viewBlank" hidden>
      <div class="ph-crumb" id="phCrumb"></div>
      <div class="ph-title" id="phTitle"></div>
@@ -110,6 +113,8 @@
       <b>备选区</b>
       <span class="count" id="stageCount">0</span>
       <span class="badge ok" id="stageBadge">空</span>
+      <!-- 车卡进度（还差哪些没定、还能选什么）在悬浮窗第二页；这儿是它唯一的入口 -->
+      <button id="btnTodo" class="link" title="打开悬浮窗第二页「待办事项」：还差哪些没定、还能选哪些法术和专长">📋 待办</button>
       <button id="stageClear" class="link danger">清空</button>
     </div>
     <div id="stageList" class="tray-list"></div>
@@ -174,6 +179,9 @@
   </div>
 </div>
 
-<script src="app.js?v=15"></script>
+<!-- 悬浮窗：第一页「词条详解」——点哪一条（法术 / 职业特性 / 种族特性 / 专长 / 魔法物品）都在这儿显示；
+     第二页「待办事项」——按当前进度列出还差什么没定、还能选哪些法术 / 专长。顶栏那颗「📋 待办」点进来 -->
+<div id="pop" class="pop" hidden></div>
+<script src="app.js?v=31"></script>
 </body>
 </html>

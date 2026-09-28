@@ -2,7 +2,7 @@
 // 法术速查填表：左（列表）→ 中（详情）→ 抓进最右的备选区 → 从那儿选表 → 一键填入
 
 // 前端期望的服务端接口版本：对不上说明服务没重启（比如还开着旧窗口）
-const API_VERSION = 5;
+const API_VERSION = 6;
 
 const state = {
   q: '',
@@ -154,6 +154,14 @@ const PG_TARGET = {
   '专长': 'feat', '法术位': 'spell.list', '工具熟练': 'origin',
 };
 
+/// 上面那些格子各属于哪一块：悬浮窗第二页「待办事项」按这个分组排
+const PG_GROUP = {
+  '角色名': '基本信息', '种族': '基本信息', '亚种': '基本信息', '出身': '基本信息', '阵营': '基本信息',
+  '主职业': '职业', '子职业': '职业', '等级': '职业',
+  '六项属性': '属性与技能', '技能熟练': '属性与技能', '豁免熟练': '属性与技能',
+  '专长': '专长', '法术位': '法术', '工具熟练': '出身',
+};
+
 function formFieldsMap(info) {
   const out = new Map();
   for (const s of (info && info.sections) || []) {
@@ -163,6 +171,20 @@ function formFieldsMap(info) {
     }
   }
   return out;
+}
+
+/// 把备选区里攒着、还没写进表的字段值盖到表单映射上。
+///
+/// 进度算的是「这个人卡现在定了什么」，所以攒在备选区里的那些也算数 ——
+/// 不然填完一整页、只要还没点「填入表格」，待办就还全报「未填」。
+function applyStagedFields(map, formKey) {
+  for (const e of stageState.items) {
+    if (e.kind !== 'field') continue;
+    if (formKey && e.formKey !== formKey) continue;
+    const v = String(e.value == null ? '' : e.value).trim();
+    if (e.field) map.set(e.field, v);
+    if (e.cell) map.set('@' + e.cell, v);
+  }
 }
 
 /// 等级 → 该有的专长数（2024：4/8/12/16 级各一次属性值提升 / 专长，19 级传奇恩惠）
@@ -181,6 +203,8 @@ async function loadProgress() {
     ]);
     const b = formFieldsMap(basic);
     const a = formFieldsMap(attrs);
+    applyStagedFields(b, 'basic');
+    applyStagedFields(a, 'basic');
     const lv = parseInt(b.get('level') || '0', 10) || 0;
     const rows = [];
     const add = (label, value, ok, hint) => rows.push({ label, value, ok, hint: hint || '' });
@@ -199,7 +223,17 @@ async function loadProgress() {
 
     // 六项属性的初始值：六个都填了才算过
     // 卡里模板预填的 10 算「还没动」——真填过的一定跟 10 不一样
-    const attrCells = ['I13', 'I14', 'I15', 'I16', 'I17', 'I18'];
+    // 格子从表单里认，别写死 13–18 行（老版式卡的技能表整块会挪，属性块虽然稳，但同源的东西一起认更保险）
+    const attrCells = [];
+    // 格子从表单里认，别写死 13–18 行。注意这里要看 attrs.sections —— a 是
+    // formFieldsMap() 出来的 Map，没有 .sections，写成 a.sections 会永远取到空表，
+    // 于是这一行恒定显示「0/6 有值」还判成已完成。
+    for (const s of (attrs.sections || [])) {
+      if (s.title !== '六项属性') continue;
+      for (const f of (s.fields || [])) {
+        if (f.label === '初始值' && f.cell) attrCells.push(f.cell);
+      }
+    }
     const filled = attrCells.filter((c) => {
       const v = a.get('@' + c) || '';
       return v && v !== '10';
@@ -207,10 +241,33 @@ async function loadProgress() {
     add('六项属性', `${filled}/6 有值`, filled === attrCells.length);
 
     // 技能熟练：卡里打 O 的条数；职业正文里写着「选择 N 项」就一起报
-    const skills = ['B41', 'B43', 'B44', 'B45', 'B47', 'B48', 'B49', 'B50', 'B51', 'B53',
-      'B54', 'B55', 'B56', 'B57', 'B59', 'B60', 'B61', 'B62']
-      .filter((c) => (a.get('@' + c) || '').toUpperCase() === 'O').length;
+    // 技能行同样从卡里认：v1.1.1 在 40–61 行、v1.0.12 在 41–62 行、米瑞尔那种老卡在 32–53 行，
+    // 写死会把法术块、属性分组标题也数进去。
+    // 每行连技能名一起记下来：备选区里排队等着打 O 的那几条也要数（还没写进表）。
+    const skillRows = [];
+    for (const s of (attrs.sections || [])) {
+      if (s.title !== '技能') continue;
+      let rowName = '';
+      for (const f of (s.fields || [])) {
+        if (f.kind === 'label' && f.cell && f.value) rowName = String(f.value).trim();
+        if (f.kind === 'toggle' && f.label === '熟练' && f.cell) {
+          skillRows.push({ cell: f.cell, name: rowName });
+        }
+      }
+    }
+    // 「技能熟练」那几条：表单字段（勾选）是 kind=field、出身/职业给的整句是
+    // kind=effect、种族/专长挑出来的单条是 kind=prof —— 三种都算。整句那种
+    // （「运动和威吓」）按名字包含来认。
+    const stagedSkillText = stageState.items
+      .filter((e) => e.label === '技能熟练')
+      .map((e) => String(e.kind === 'prof' ? (e.value || '') : (e.text || '')).trim())
+      .filter((t) => t);
+    const skills = skillRows.filter((r) => {
+      if ((a.get('@' + r.cell) || '').toUpperCase() === 'O') return true;
+      return !!r.name && stagedSkillText.some((t) => t.includes(r.name));
+    }).length;
     let need = 0;
+    let spellRule = null;      // 职业特性表里那张「该等级要选几个戏法 / 几个法术」的规则
     if (b.get('cls')) {
       try {
         const r = await api('/api/rule?kind=class&name=' + encodeURIComponent(b.get('cls')));
@@ -218,6 +275,7 @@ async function loadProgress() {
           const t = (parseClassTraits(r.text) || []).find((x) => x.label === '技能熟练');
           const menu = t ? classMenu(t.text) : null;
           need = menu ? menu.pick : 0;
+          spellRule = classSpellTable(r.text, lv);
         }
       } catch (e) {}
     }
@@ -228,26 +286,55 @@ async function loadProgress() {
     const got = (feat.existing || []).length;
     const want = featsByLevel(lv);
     const left = Math.max(0, want - got);
-    add('专长', left ? `还能选 ${left} 个` : `${got} 个`, !left && got > 0);
+    add('专长', left ? `还能选 ${left} 个` : `${got} 个`, !left && got > 0,
+      lv ? `${lv} 级：4·8·12·16·19 级各一个` : '等级还没填（基本信息里选了等级就按 4·8·12·16·19 算）');
 
     const freeSlots = Math.max(0, (table.slotsTotal || 0) - (table.used || 0));
-    add('法术位', freeSlots ? `空 ${freeSlots} 格` : '已满', true);
+    add('法术位', freeSlots ? `空 ${freeSlots} 格` : '已满', true,
+      `卡里一共 ${table.slotsTotal || 0} 格（已占 ${table.used || 0}）`);
+    // 规则配额给「已选」那一栏用（只是提示，不拦）
+    state.progress = {
+      lv: lv,
+      cls: b.get('cls') || '',
+      skillNeed: need,
+      skills: skills,
+      featExisting: (feat.existing || []).length,
+      featNames: (feat.existing || []).slice(),
+      slotUsed: table.used || 0,
+      slotTotal: table.slotsTotal || 0,
+      spellRule: spellRule,
+    };
+    // 每条进度挂上「属于哪一块 / 点了跳哪一页」：悬浮窗第二页「待办」直接拿去排版
+    for (const r of rows) {
+      r.group = PG_GROUP[r.label] || '其它';
+      r.go = PG_TARGET[r.label] || '';
+    }
+    renderPickedPanes();     // 配额（上限）跟着进度一起刷新
     renderProgress(rows);
+    // 卡里已经填了哪些法术（带环阶）——「已选几个」要用它，顶栏和待办页都得等这份数据
+    loadTodoCard().catch(() => {});
   } catch (e) {
     renderProgress([]);
   }
 }
 
-function renderProgress(rows) {
-  const box = $('stat');
-  box.innerHTML = rows.map((r) => {
-    const go = PG_TARGET[r.label] || '';
-    const cls = 'pg ' + (r.ok ? 'ok' : 'todo');
-    return `<span class="${cls}"${go ? ` data-goto="${esc(go)}"` : ''} title="${esc(r.hint || '')}">${esc(r.label)}<b>${esc(r.value)}</b></span>`;
-  }).join('');
-  [...box.querySelectorAll('.pg[data-goto]')].forEach((el) => {
-    el.onclick = () => selectNode(el.dataset.goto);
-  });
+function renderProgress(baseRows) {
+  state.progressRows = baseRows || [];   // 基础那几条；法术那两行按规则书现算（见 todoRowsAll）
+  const rows = todoRowsAll();
+  const hasTable = !!(state.table && state.table.exists);
+  const miss = rows.filter((r) => !r.ok).length;
+  // 顶栏那排进度格子删了（太占地方）；现在只在「备选区」标题行留一颗入口，
+  // 缺几项就挂在它旁边，点开就是悬浮窗第二页的完整清单。
+  const btn = $('btnTodo');
+  if (btn) {
+    const bad = hasTable && miss > 0;
+    btn.innerHTML = bad ? `📋 待办<b class="n">${miss}</b>` : '📋 待办';
+    btn.classList.toggle('miss', bad);
+    btn.title = !hasTable
+      ? '打开悬浮窗第二页「待办事项」（先选一张目标表格）'
+      : (bad ? `打开悬浮窗第二页「待办事项」：还差 ${miss} 项没定` : '打开悬浮窗第二页「待办事项」：该定的都定了');
+  }
+  renderTodoPop();      // 悬浮窗第二页开着的话，跟着进度一起刷新
 }
 
 const FACETS = [
@@ -298,6 +385,7 @@ function renderFilters() {
 
 // ---------------------------------------------------------------- 检索
 async function search() {
+  hidePop();              // 列表要重画了，旧的那条词条窗先收掉（「待办」那页是常驻的，不收）
   const url = `/api/search?q=${encodeURIComponent(state.q)}&limit=400` + (filterQuery() ? '&' + filterQuery() : '');
   const r = await api(url);
   state.items = r.items;
@@ -323,28 +411,690 @@ async function search() {
   });
 }
 
+// ---------------------------------------------------------------- 词条效果悬浮窗
+/// 列表里点哪一条（法术 / 职业特性 / 种族特性 / 专长 / 魔法物品），效果都在这个悬浮窗里看；
+/// 悬停也会自动弹一个（点一下会「钉住」，再点别处 / 按 Esc 关掉）。
+///
+/// 中间那一栏因此空出来了，改成「已选」清单——那是给你看清自己挑了哪些东西的，
+/// 跟右下角的备选区不是一回事：**备选区是待写队列，写表走「填入表格」**。
+/// 悬浮窗就两页：`entry` = 词条详解（点哪条看哪条），`todo` = 待办事项（还差什么、还能选什么）。
+/// `todo` 那页是常驻的：列表重画、点到别处都不收，要关就按 Esc 或点 ✕。
+const popState = { seq: 0, id: '', kind: '', onAdd: null, onChoice: null, tab: 'entry', last: null };
+
+function popTags(e, kind) {
+  const f = e.fields || {};
+  const tags = [];
+  if (kind === 'spell') {
+    const lv = f['环阶'];
+    if (lv != null && lv !== '') tags.push(lv === '0' ? '戏法' : lv + '环');
+    for (const k of ['学派', '来源']) if (f[k]) tags.push(f[k]);
+    if (f['专注'] === '是') tags.push('专注');
+    if (f['仪式'] === '是') tags.push('仪式');
+    return tags;
+  }
+  for (const k of ['职业', '子职']) if (f[k]) tags.push(f[k]);
+  if (f['等级']) tags.push(f['等级'] + '级');
+  if (f['类别']) tags.push(f['类别']);
+  if (f['稀有度']) tags.push(f['稀有度']);
+  if (e.source) tags.push(e.source);
+  return tags;
+}
+
+function entryPopHtml(e, kind) {
+  const fields = Object.entries(e.fields || {});
+  const tags = popTags(e, kind);
+  const has = e.id ? stageHasEntry(e.id) : false;
+  return popBarHtml(POP_KIND_LABEL[kind] || '词条') + `
+    <div class="pop-body">
+      <h2>${esc(e.name)}</h2>
+      <div class="en">${esc(e.en)}</div>
+      <div class="tagline">${tags.map((t, i) => `<span class="tag${i === 0 ? ' hot' : ''}">${esc(t)}</span>`).join('')}</div>
+      ${(e.choices && e.choices.length)
+        ? `<div class="choices"><div class="choices-t">${esc(e.choicesHint || '这条要你挑一个：')}</div>` +
+          e.choices.map((c) => `<button class="pop-choice" data-v="${esc(c)}">${esc(c)}</button>`).join('') + '</div>'
+        : ''}
+      ${e.hideAdd ? '' : `<div class="add"><button class="primary" id="popAdd" ${has ? 'disabled' : ''}>${has ? '已在备选区' : '+ 抓进备选区'}</button></div>`}
+      ${fields.length ? `<table>${fields.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>` : ''}
+      <pre>${esc(e.text || '')}</pre>
+    </div>
+    ${POP_GRIP}`;
+}
+
+const POP_KIND_LABEL = {
+  spell: '法术', classFeature: '职业特性', species: '种族特性', feat: '专长', magicItem: '魔法物品',
+  equipment: '装备',
+  // 备选区里点非词条的行时会用到（效果 / 普通字段 / 规则库条目）
+  effect: '规则效果', field: '表格字段',
+  class: '职业', subclass: '子职业', background: '出身',
+  prof: '熟练项',
+};
+
+const POP_GRIP = '<div class="pop-grip" title="拖动调整大小"></div>';
+
+/// 悬浮窗顶上那一条 + 两个页签（① 词条详解 ② 待办事项）
+function popBarHtml(kindLabel) {
+  const tab = (key, label) =>
+    `<button class="pop-tab${popState.tab === key ? ' on' : ''}" data-tab="${key}">${esc(label)}</button>`;
+  return `<div class="pop-bar" title="按住这里拖动">
+      <span class="pop-kind">${esc(kindLabel)}</span>
+      <span class="pop-hint">可拖动</span>
+      <button class="pop-x" title="关闭（Esc 也行）">✕ 关闭</button>
+    </div>
+    <div class="pop-tabs">${tab('entry', '词条详解')}${tab('todo', '待办事项')}</div>`;
+}
+
+/// 悬浮窗里那些固定控件（关闭 / 切页 / 待办行跳转 / 「抓进备选区」）统一在这儿接线
+function wirePopChrome() {
+  const pop = $('pop');
+  const x = pop.querySelector('.pop-x');
+  if (x) x.onclick = (e) => { e.stopPropagation(); hidePop(true); };
+  [...pop.querySelectorAll('.pop-tab')].forEach((b) => {
+    b.onclick = (e) => { e.stopPropagation(); switchPopTab(b.dataset.tab); };
+  });
+  [...pop.querySelectorAll('.todo-go')].forEach((el) => {
+    el.onclick = (e) => { e.stopPropagation(); selectNode(el.dataset.go); };
+  });
+  // 「……之一」那种熟练的候选按钮
+  [...pop.querySelectorAll('.pop-choice')].forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const fn = popState.onChoice;
+      hidePop(true);
+      if (fn) fn(b.dataset.v || '');
+    };
+  });
+  const add = $('popAdd');
+  if (add && !add.disabled && popState.onAdd) {
+    add.onclick = () => {
+      popState.onAdd();
+      add.textContent = '已在备选区';
+      add.disabled = true;
+    };
+  }
+}
+
+function paintEntryPop(data) {
+  popState.last = data;
+  $('pop').innerHTML = entryPopHtml(data, data.kind || '');
+  wirePopChrome();
+}
+
+/// 切页签：词条那页拿最近看过的那条重画（没有就提示点一条），待办那页现算
+function switchPopTab(tab) {
+  if (tab === popState.tab) return;
+  popState.tab = tab;
+  if (tab === 'todo') {
+    renderTodoPop();
+    loadProgress().catch(() => {});     // 顺手刷一遍进度，画完会自己重画
+    loadTodoCard().catch(() => {});     // 卡里已经填了哪些法术（带环阶）
+  } else if (popState.last) {
+    paintEntryPop(popState.last);
+  } else {
+    $('pop').innerHTML = popBarHtml('词条') +
+      `<div class="pop-body"><div class="empty">左边点一条词条（法术 / 职业特性 / 种族特性 / 专长 / 魔法物品），<br>效果就显示在这里。</div></div>${POP_GRIP}`;
+    wirePopChrome();
+  }
+}
+
+// ------------------------------------------------------------ 待办事项（悬浮窗第二页）
+/// 副标题里的环阶：'戏法' → '0'，'2环 · 塑能…' → '2'，认不出来给 ''
+function spellLevelOf(subtitle) {
+  const m = /(戏法|(\d+)\s*环)/.exec(String(subtitle || ''));
+  if (!m) return '';
+  return m[1].charAt(0) === '戏' ? '0' : m[2];
+}
+
+/// 你手上已经挑了的法术：卡里填的（/api/card）+ 备选区里的，按名字去重，尽量认出环阶
+function pickedSpellLevels() {
+  const seen = new Map();          // 归一化名 → 环阶
+  const put = (name, subtitle) => {
+    const k = norm(name);
+    if (!k) return;
+    const lv = spellLevelOf(subtitle);
+    if (!seen.has(k) || (seen.get(k) === '' && lv !== '')) seen.set(k, lv);
+  };
+  for (const e of (todoCard.entries || [])) if (e.formKey === 'spell') put(e.name, e.subtitle);
+  for (const e of (stageState.items || [])) {
+    if (e.kind === 'entry' && e.formKey === 'spell') put(e.name, e.subtitle);
+  }
+  return [...seen.values()];
+}
+
+/// 职业正文里那张「职业特性表」→ 这个等级要选几个戏法 / 几个法术 / 最高能选到几环。
+///
+/// 表是一格一个 token 竖着排下来的，表头就是列名：
+///   等级 / 熟练加值(PB) / 职业特性 / [职业自己的列…] / 戏法 / 准备法术 / 一环…九环
+/// 所以按表头名字定位列号就够了 —— 吟游诗人多一列「诗人骰」、牧师多一列「引导神力」、
+/// 圣武士 / 游侠根本没有「戏法」那一列、魔契师的法术位写在「法术位环阶」里，这些都不用特判。
+function classSpellTable(text, lv) {
+  if (!text || !lv) return null;
+  const lines = String(text).split(/\r?\n/).map((s) => s.trim());
+  let i = lines.findIndex((l, k) => l === '等级' && (lines[k + 1] || '').indexOf('熟练加值') === 0);
+  if (i < 0) return null;
+  const hdr = [];
+  while (i < lines.length && !/^\d+$/.test(lines[i])) hdr.push(lines[i++]);
+  // 去掉「——每环法术位——」那种占一整行的分组标题（真列名不会以破折号开头），
+  // 顺手把 UA 里「戏法*」这种带星号的列名还原
+  const cols = hdr.filter((h) => h && !/^[-—–]/.test(h)).map((h) => h.replace(/\*/g, '').trim());
+  const n = cols.length;
+  if (!n) return null;
+  const table = [];
+  while (i + n <= lines.length && /^\d+$/.test(lines[i])) { table.push(lines.slice(i, i + n)); i += n; }
+  const row = table[lv - 1];
+  if (!row) return null;
+  const at = (name) => { const k = cols.indexOf(name); return k < 0 ? null : row[k]; };
+  const num = (v) => (v != null && /^\d+$/.test(v) ? +v : 0);
+  const RING = '一二三四五六七八九';
+  let maxLevel = 0;
+  for (let k = 0; k < 9; k++) {
+    const v = at(RING[k] + '环');
+    if (v != null && v !== '—' && v !== '-') maxLevel = k + 1;
+  }
+  if (!maxLevel) {
+    // 魔契师：法术位只到 5 环，环阶单独写一列
+    const v = String(at('法术位环阶') || '');
+    const k = RING.indexOf(v.charAt(0));
+    if (k >= 0) maxLevel = k + 1;
+  }
+  const label = cols.includes('已知法术') ? '已知法术' : '准备法术';
+  const prepared = at(label);
+  if (prepared == null) return null;   // 这张职业表不是施法职业的写法
+  return {
+    hasCantrips: cols.includes('戏法'),
+    cantrips: cols.includes('戏法') ? num(at('戏法')) : 0,
+    label: label,
+    prepared: num(prepared),
+    maxLevel: maxLevel,
+  };
+}
+
+/// 法术那两行：戏法 / 法术 —— 按规则书算「还要选几个、几环」（← 「还能选几个几环法术」）
+function spellTodoRows() {
+  const t = state.table || {};
+  if (!t.exists) return [];
+  const p = state.progress || {};
+  const levels = pickedSpellLevels();
+  const tally = new Map();
+  let haveC = 0, haveS = 0, unknown = 0;
+  for (const l of levels) {
+    tally.set(l, (tally.get(l) || 0) + 1);
+    if (l === '0') haveC++;
+    else if (l === '') unknown++;
+    else haveS++;
+  }
+  const parts = [];
+  if (tally.size) parts.push('已选：' + tallyText(tally));
+  if (unknown) parts.push(`另有 ${unknown} 条认不出环阶`);
+  if (todoCard.loading) parts.push('正在读卡里已有的法术…');
+  parts.push(`卡里「法术书」${t.slotsTotal || 0} 格，已填 ${t.used || 0}`);
+  const detail = parts.join('；');
+
+  const rule = p.spellRule;
+  if (!rule) {
+    // 认不出这张职业表（第三方职业 / 规则书里没有）：退回「卡里还剩几个格」
+    const free = Math.max(0, (t.slotsTotal || 0) - (t.used || 0));
+    return [{
+      group: '法术', label: '法术位', value: free ? `空 ${free} 格` : '已满', ok: true,
+      go: 'spell.list', hint: '没从规则书里认出这张职业的施法表，先按卡里还剩多少格看', detail: detail,
+    }];
+  }
+  const cls = p.cls || '本职';
+  const rows = [];
+  if (rule.hasCantrips) {
+    const left = Math.max(0, rule.cantrips - haveC);
+    rows.push({
+      group: '法术', label: '戏法', ok: left === 0, go: 'spell.list',
+      value: left ? `还要选 ${left} 个（已选 ${haveC} / ${rule.cantrips}）` : `已选 ${haveC} / ${rule.cantrips}`,
+      hint: `${cls} ${p.lv} 级：戏法 ${rule.cantrips} 个`, detail: '',
+    });
+  }
+  const leftS = Math.max(0, rule.prepared - haveS);
+  rows.push({
+    group: '法术', label: '法术', ok: leftS === 0, go: 'spell.list',
+    value: leftS
+      ? `还要选 ${leftS} 个${rule.maxLevel ? `（1–${rule.maxLevel} 环）` : ''}`
+      : `已选 ${haveS} / ${rule.prepared}`,
+    hint: `${cls} ${p.lv} 级：${rule.label} ${rule.prepared} 个` + (rule.maxLevel ? `，最高能选到 ${rule.maxLevel} 环` : ''),
+    detail: detail,
+  });
+  return rows;
+}
+
+/// 顶栏和「待办」页共用的一份行：基础那几条 + 按规则算出来的法术行
+function todoRowsAll() {
+  const base = (state.progressRows || []).filter((r) => r.group !== '法术');
+  return [...base, ...spellTodoRows()];
+}
+
+function spellLvName(k) { return k === '0' ? '戏法' : k + '环'; }
+
+function tallyText(tally) {
+  const keys = [...tally.keys()].filter((k) => k !== '').sort((a, b) => (+a) - (+b));
+  const parts = keys.map((k) => `${spellLvName(k)} ×${tally.get(k)}`);
+  if (tally.get('')) parts.push(`环阶未知 ×${tally.get('')}`);
+  return parts.join('、');
+}
+
+/// 卡里现在填了哪些东西（带环阶）——待办页靠它把「已经填的法术」按环阶列出来。
+/// 服务端读一整张卡不便宜，所以按「路径 + 修改时间 + 大小」缓存，卡一改就自动作废。
+const todoCard = { key: '', entries: [], loading: false };
+async function loadTodoCard() {
+  const t = state.table || {};
+  if (!t.exists) return;
+  const key = `${t.path}|${t.mtime}|${t.size}`;
+  if (todoCard.key === key) return;
+  todoCard.key = key;                 // 先占住：万一读失败也别反复重试（卡变了自然会重来）
+  todoCard.loading = true;
+  renderTodoPop();
+  let r;
+  try {
+    r = await api('/api/card');
+  } catch (e) {
+    todoCard.loading = false;
+    renderTodoPop();
+    return;
+  }
+  todoCard.loading = false;
+  if (todoCard.key !== key) return;   // 读的这段时间里又换卡了，这份结果丢掉
+  todoCard.entries = r.entries || [];
+  renderProgress(state.progressRows);  // 顶栏的「法术」和待办页一起重画
+}
+
+const TODO_GROUPS = ['基本信息', '职业', '属性与技能', '专长', '法术'];
+
+function todoRowDetail(r) {
+  if (r.label === '专长') {
+    const names = (state.progress && state.progress.featNames) || [];
+    if (names.length) return '卡里已经写了：' + names.map((n) => esc(n)).join('、');
+  }
+  return '';
+}
+
+function todoBodyHtml() {
+  const t = state.table || {};
+  if (!t.exists) {
+    return `<div class="empty">还没有目标表格。<br>右边备选区下面点「新建表格 / 使用已有表格」先选一张，<br>这里就会列出还差什么、还能选什么。</div>`;
+  }
+  const rows = todoRowsAll();
+  const miss = rows.filter((r) => !r.ok).length;
+  const staged = stageState.items || [];
+  const stagedEnt = staged.filter((e) => e.kind === 'entry');
+  const stagedFld = staged.length - stagedEnt.length;
+
+  const parts = [`<div class="todo-sum">${miss ? `还差 <b>${miss}</b> 项没定` : '该定的都定了'}` +
+    `<span class="sep">·</span>备选区 <b>${staged.length}</b> 条待写入` +
+    `（词条 ${stagedEnt.length} / 字段 ${stagedFld}）</div>`];
+
+  const seen = [];
+  for (const g of [...TODO_GROUPS, ...rows.map((r) => r.group)]) {
+    if (seen.includes(g)) continue;
+    seen.push(g);
+    const rs = rows.filter((r) => r.group === g);
+    if (!rs.length) continue;
+    parts.push(`<div class="todo-group"><h4>${esc(g)}</h4>` +
+      rs.map((r) => {
+        const d = todoRowDetail(r) || r.detail || '';
+        return `<div class="todo-item ${r.ok ? 'done' : 'miss'}">
+          <div class="todo-row"${r.hint ? ` title="${esc(r.hint)}"` : ''}>
+            <span class="mk">${r.ok ? '✓' : '○'}</span>
+            <span class="lb">${esc(r.label)}</span>
+            <span class="vl">${esc(r.value)}</span>
+            ${r.go ? `<button class="todo-go" data-go="${esc(r.go)}">去填 ›</button>` : ''}
+          </div>
+          ${d ? `<div class="todo-d">${d}</div>` : ''}
+        </div>`;
+      }).join('') + '</div>');
+  }
+  return parts.join('');
+}
+
+/// 重画待办页（没开着就什么都不做）。写一条就会重画一次，滚动位置留着
+function renderTodoPop() {
+  const pop = $('pop');
+  if (pop.hidden || popState.tab !== 'todo') return;
+  const body = pop.querySelector('.pop-body');
+  const keep = body ? body.scrollTop : 0;
+  pop.innerHTML = popBarHtml('待办事项') + `<div class="pop-body">${todoBodyHtml()}</div>${POP_GRIP}`;
+  wirePopChrome();
+  const nb = pop.querySelector('.pop-body');
+  if (nb) nb.scrollTop = keep;
+}
+
+/// 打开悬浮窗第二页「待办事项」（顶栏那颗「📋 待办」点进来）
+async function openTodoPop(anchor) {
+  popState.tab = 'todo';
+  popState.seq++;                    // 还挂在路上的词条请求作废，别把待办页顶掉
+  const pop = $('pop');
+  pop.hidden = false;
+  renderTodoPop();                   // 先用手上这份数据画出来
+  placePop(anchor);
+  loadProgress().catch(() => {});    // 再刷一遍进度（画完会自己重画）
+  loadTodoCard().catch(() => {});    // 卡里的法术带上环阶
+}
+
+// 悬浮窗的位置 / 大小记在 localStorage 里：拖到哪儿下次还在这儿
+const POP_RECT_KEY = 'quickref.popRect';
+let popRect = (() => {
+  try {
+    const r = JSON.parse(localStorage.getItem(POP_RECT_KEY) || 'null');
+    if (r && typeof r.left === 'number' && typeof r.top === 'number') return r;
+  } catch (e) {}
+  return null;
+})();
+
+function savePopRect() {
+  const pop = $('pop');
+  if (pop.hidden) return;
+  const r = pop.getBoundingClientRect();
+  popRect = { left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
+  try { localStorage.setItem(POP_RECT_KEY, JSON.stringify(popRect)); } catch (e) {}
+}
+
+/// 第一次打开时找个位置（列表右边）；以后就用你拖到的地方
+/// 位置收一下，别让标题条跑到屏幕外（窗口比视口还高时至少把标题条留在里面）
+function clampPop(x, y, w, h) {
+  const maxX = Math.max(0, window.innerWidth - Math.min(w, window.innerWidth));
+  const maxY = Math.max(0, window.innerHeight - Math.min(h, window.innerHeight - 44));
+  return { x: Math.max(0, Math.min(x, maxX)), y: Math.max(0, Math.min(y, maxY)) };
+}
+
+function placePop(anchor) {
+  const pop = $('pop');
+  if (popRect) {
+    if (popRect.width) pop.style.width = popRect.width + 'px';
+    if (popRect.height) pop.style.height = popRect.height + 'px';
+    const c = clampPop(popRect.left, popRect.top, pop.offsetWidth, pop.offsetHeight);
+    pop.style.left = c.x + 'px';
+    pop.style.top = c.y + 'px';
+    return;
+  }
+  const w = pop.offsetWidth;
+  const h = pop.offsetHeight;
+  let x = 16;
+  let y = 16;
+  if (anchor && anchor.getBoundingClientRect) {
+    const a = anchor.getBoundingClientRect();
+    const stage = anchor.closest && anchor.closest('.stage');
+    if (stage) {
+      // 入口在右边的「备选区」标题行：窗口开在它左边，别盖住备选区
+      const sr = stage.getBoundingClientRect();
+      const c0 = clampPop(sr.left - w - 10, a.top - 6, w, h);
+      pop.style.left = c0.x + 'px';
+      pop.style.top = c0.y + 'px';
+      return;
+    }
+    const host = anchor.closest('.pane-list') || anchor.closest('.pane-detail') ||
+                 anchor.closest('.lookup') || anchor.parentElement;
+    const hr = host ? host.getBoundingClientRect() : a;
+    x = hr.right + 10;
+    y = a.top - 6;
+  }
+  const c = clampPop(x, y, w, h);
+  pop.style.left = c.x + 'px';
+  pop.style.top = c.y + 'px';
+}
+
+// 拖：按住标题条拖、右下角缩放角改大小，位置随手记下来
+//
+// `popDrag.drag` / `popDrag.size` 是模块级状态，`hidePop()` 关窗时会一起清掉：
+// 有些外壳（WebView2 离屏合成）里 mouseup 会丢，状态留着的话窗口会一直"粘"在鼠标上，
+// 于是看起来就是「关不掉」。mousemove 里再兜一道：按键都松了（buttons === 0）就算拖完了。
+const popDrag = { drag: null, size: null };
+(function wirePopDrag() {
+  document.addEventListener('mousedown', (e) => {
+    // 右下角那个角：改大小
+    if (e.target.closest && e.target.closest('.pop-grip')) {
+      const pop = $('pop');
+      const r = pop.getBoundingClientRect();
+      popDrag.size = { w: r.width, h: r.height, x: e.clientX, y: e.clientY };
+      e.preventDefault();
+      return;
+    }
+    const bar = e.target.closest && e.target.closest('.pop-bar');
+    // 标题条上的按钮（关闭等）不算拖
+    if (!bar || (e.target.closest && e.target.closest('button'))) return;
+    const pop = $('pop');
+    const r = pop.getBoundingClientRect();
+    popDrag.drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if ((popDrag.drag || popDrag.size) && e.buttons === 0) {
+      popDrag.drag = null;      // 鼠标早就松了，只是 mouseup 没送到
+      popDrag.size = null;
+      savePopRect();
+      return;
+    }
+    if (popDrag.size) {
+      const pop = $('pop');
+      const s = popDrag.size;
+      const w = Math.max(300, Math.min(s.w + (e.clientX - s.x), window.innerWidth - pop.offsetLeft - 8));
+      const h = Math.max(180, Math.min(s.h + (e.clientY - s.y), window.innerHeight - pop.offsetTop - 8));
+      pop.style.width = w + 'px';
+      pop.style.height = h + 'px';
+      savePopRect();
+      return;
+    }
+    if (!popDrag.drag) return;
+    const pop = $('pop');
+    const w = pop.offsetWidth;
+    const h = pop.offsetHeight;
+    const c = clampPop(e.clientX - popDrag.drag.dx, e.clientY - popDrag.drag.dy, w, h);
+    pop.style.left = c.x + 'px';
+    pop.style.top = c.y + 'px';
+    // 每拖一下就顺手记一次（有的外壳里 mouseup 会丢，别指望它）
+    savePopRect();
+  });
+  document.addEventListener('mouseup', () => {
+    const was = popDrag.drag || popDrag.size;
+    popDrag.drag = null;
+    popDrag.size = null;
+    if (was) savePopRect();     // 拉右下角改大小也走这儿
+  });
+  window.addEventListener('blur', () => { popDrag.drag = null; popDrag.size = null; });
+})();
+
+/// 直接拿一份数据画悬浮窗（职业特性页那些「N级：特性」条目的 id 不是词条 id，
+/// 走不了 /api/entry，就用本地解析出来的正文）
+function showPopData(data, anchor, opts) {
+  const o = opts || {};
+  popState.seq++;
+  popState.id = data.id || '';
+  popState.kind = data.kind || '';
+  popState.onAdd = o.onAdd || null;
+  popState.onChoice = o.onChoice || null;
+  if (!o.keepTab) popState.tab = 'entry';   // 点词条就回到「词条详解」那一页
+  const pop = $('pop');
+  pop.hidden = false;
+  paintEntryPop(data);
+  placePop(anchor);
+}
+
+async function showPop(id, kind, anchor, opts) {
+  const o = opts || {};
+  const seq = ++popState.seq;             // 悬停扫过去时，慢的那个结果直接丢掉
+  let r;
+  try {
+    r = await api('/api/entry?kind=' + encodeURIComponent(kind || 'spell') + '&id=' + encodeURIComponent(id));
+  } catch (e) {
+    return;
+  }
+  if (seq !== popState.seq) return;
+  showPopData(Object.assign({ kind: kind }, r.entry), anchor, o);
+}
+
+/// 关掉悬浮窗（里面存的位置不丢，下次点词条还在你拖到的地方）
+function hidePop(force) {
+  // 待办那一页是常驻的：列表重画、点到别处都不把它收掉（要关就按 Esc 或点 ✕）
+  if (!force && popState.tab === 'todo') return;
+  popDrag.drag = null;                     // 拖到一半关掉也得把拖拽状态清掉
+  popDrag.size = null;
+  popState.id = '';
+  popState.onAdd = null;
+  popState.onChoice = null;
+  popState.tab = 'entry';
+  popState.seq++;                          // 让还在路上的请求作废
+  $('pop').hidden = true;
+}
+
+/// 点一条词条：把效果送进悬浮窗（不再往中间那一栏写东西——那一栏现在列「已选」）
 async function openEntry(brief, el) {
-  const r = await api('/api/entry?id=' + encodeURIComponent(brief.id));
-  state.current = r.entry;
   [...document.querySelectorAll('.item.on')].forEach((x) => x.classList.remove('on'));
   if (el) el.classList.add('on');
-  const e = r.entry;
-  const fields = Object.entries(e.fields || {});
-  const tags = [];
-  const lv = e.fields && e.fields['环阶'];
-  if (lv != null && lv !== '') tags.push(lv === '0' ? '戏法' : lv + '环');
-  for (const k of ['学派', '来源']) if (e.fields && e.fields[k]) tags.push(e.fields[k]);
-  if (e.fields && e.fields['专注'] === '是') tags.push('专注');
-  if (e.fields && e.fields['仪式'] === '是') tags.push('仪式');
-  $('detail').innerHTML = `
-    <h2>${esc(e.name)}</h2>
-    <div class="en">${esc(e.en)}</div>
-    <div class="tagline">${tags.map((t, i) => `<span class="tag${i === 0 ? ' hot' : ''}">${esc(t)}</span>`).join('')}</div>
-    <div class="add"><button class="primary" id="btnAdd" ${stageHasEntry(e.id) ? 'disabled' : ''}>${stageHasEntry(e.id) ? '已在备选区' : '+ 抓进备选区'}</button></div>
-    ${fields.length ? `<table>${fields.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>` : ''}
-    <pre>${esc(e.text)}</pre>`;
-  const btn = $('btnAdd');
-  if (btn && !stageHasEntry(e.id)) btn.onclick = () => addStageEntry('spell', { id: e.id, name: e.name, subtitle: e.en || '' }, '法术', () => search());
+  await showPop(brief.id, 'spell', el, {
+    onAdd: () => addStageEntry('spell', brief, '法术', () => search()),
+  });
+}
+
+/// 「已选」那一栏：把备选区里属于这一类的词条列出来（点一条看效果，× 从备选区拿掉）
+function renderPickedInto(host, formKeys, label, pageKey) {
+  if (!host) return;
+  const items = stageState.items.filter((e) => e.kind === 'entry' && formKeys.includes(e.formKey));
+  const quota = quotaHtml(quotasFor(pageKey || ''));
+  if (!items.length) {
+    host.innerHTML = quota + `<div class="empty">还没挑${esc(label)}。<br>` +
+      `左边点一条 → 效果在那个能拖动的小窗里 → 按「+ 抓进备选区」，<br>` +
+      `这里就会把你挑的列出来（写表还是走右下角的「填入表格」）。</div>`;
+    return;
+  }
+  host.innerHTML = `<div class="picked-head">已选${esc(label)} <b>${items.length}</b> 条　` +
+    `<span class="hint">点一条看效果（可拖动的小窗）；写表走右下角「填入表格」</span></div>` +
+    quota +
+    items.map((e) => `
+      <div class="picked" data-id="${esc(e.id)}" data-kind="${esc(typeOfFormKey(e.formKey))}">
+        <div class="t">
+          <div><span class="nm">${esc(e.name)}</span>${e.subtitle ? `<span class="en">${esc(e.subtitle)}</span>` : ''}</div>
+          <div class="s">${esc(e.page || '')}</div>
+        </div>
+        <button class="del" data-kill="${esc(e.id)}" title="从备选区拿掉">×</button>
+      </div>`).join('');
+  [...host.querySelectorAll('.picked')].forEach((el) => {
+    const id = el.dataset.id;
+    const kind = el.dataset.kind;
+    const item = items.find((x) => x.id === id) || {};
+    // 带正文的（职业特性页那些「N级：特性」）直接用本地正文画；其余回词条库查
+    const show = (anchor) => {
+      if (item.text != null && item.text !== '') {
+        showPopData({
+          id: id, kind: kind, name: item.name, en: item.subtitle || '',
+          tags: item.tags || [], fields: {}, text: item.text,
+        }, anchor);
+      } else {
+        showPop(id, kind, anchor);
+      }
+    };
+    el.onclick = (ev) => {
+      if (ev.target.closest('[data-kill]')) return;
+      show(el);
+    };
+  });
+  [...host.querySelectorAll('[data-kill]')].forEach((b) => {
+    b.onclick = (ev) => { ev.stopPropagation(); removeStageEntry(b.dataset.kill); };
+  });
+}
+
+const FORMKEY_TYPE = { spell: 'spell', class: 'classFeature', species: 'species', feat: 'feat', magic: 'magicItem' };
+function typeOfFormKey(k) { return FORMKEY_TYPE[k] || k; }
+
+/// 现在这一页是不是「词条列表页」——是的话，中间那一栏列「已选」
+const PICKED_PAGES = {
+  species: ['species'],
+  feat: ['feat'],
+  classlevel: ['class'],     // 职业特性页：抓的是「N级：特性」
+  all: ['spell', 'classFeature', 'feat', 'species', 'magicItem'],
+};
+const PICKED_LABEL = { species: '种族特性', feat: '专长', classlevel: '职业特性', all: '词条' };
+
+const TYPE_FORMKEY = { spell: 'spell', classFeature: 'class', species: 'species', feat: 'feat', magicItem: 'magic' };
+
+function pickedCount(formKeys) {
+  return stageState.items.filter((e) => e.kind === 'entry' && formKeys.includes(e.formKey)).length;
+}
+
+/// 这一页的**规则配额**：`{label, used, cap, note}`，`cap = 0` 表示规则上不数个数。
+///
+/// 只用来做提示 —— 到上限了照样能加（自定义规则经常要超），写表也不受影响。
+function quotasFor(pageKey) {
+  const p = state.progress || {};
+  const t = state.table || {};
+  const lv = p.lv || parseInt((formInput('level') || {}).value || '0', 10) || 0;
+  const out = [];
+  if (pageKey === 'spell') {
+    const total = (p.slotTotal != null ? p.slotTotal : (t.slotsTotal || 0));
+    const usedCard = (p.slotUsed != null ? p.slotUsed : (t.used || 0));
+    out.push({
+      label: '法术位', used: usedCard + pickedCount(['spell']), cap: total,
+      note: `卡里一共 ${total} 格（已占 ${usedCard}）`,
+    });
+  } else if (pageKey === 'feat') {
+    out.push({
+      label: '专长', used: (p.featExisting || 0) + pickedCount(['feat']),
+      cap: lv ? featsByLevel(lv) : 0,
+      // 4 级才有第一个专长：等级不到时 cap 就是 0，别让「0 上限」显示成「无上限」
+      zero: lv ? `${lv} 级还没有专长` : '等级还没填',
+      note: lv ? `${lv} 级：4·8·12·16·19 级各一个` : '等级还没填（基本信息里选了等级就按 4·8·12·16·19 算）',
+    });
+  } else if (pageKey === 'classlevel') {
+    out.push({ label: '职业特性', used: pickedCount(['class']), cap: 0, note: '等级到了就有，规则上不数个数' });
+  } else if (pageKey === 'species') {
+    out.push({ label: '种族特性', used: pickedCount(['species']), cap: 0, note: '种族给多少就是多少，规则上不数个数' });
+  } else if (pageKey === 'magic') {
+    // 卡里已经打了同调 O 的（武器 / 护甲 / 盾 / 奇物）：规则上最多同调 3 件
+    let attuned = 0;
+    for (const s of ((formState.info || {}).sections || [])) {
+      for (const f of (s.fields || [])) {
+        if (f.label === '同调' && String(f.value || '').trim().toUpperCase() === 'O') attuned++;
+      }
+    }
+    out.push({ label: '同调', used: attuned, cap: 3, note: '规则：最多同调 3 件魔法物品' });
+  } else if (pageKey === 'all') {
+    for (const [type, name] of [['spell', '法术'], ['classFeature', '职业特性'], ['feat', '专长'],
+                                ['species', '种族特性'], ['magicItem', '魔法物品']]) {
+      out.push({ label: name, used: pickedCount([TYPE_FORMKEY[type]]), cap: 0 });
+    }
+  }
+  return out;
+}
+
+function quotaHtml(rows) {
+  if (!rows.length) return '';
+  return '<div class="quota">' + rows.map((r) => {
+    const state = r.cap > 0 ? (r.used > r.cap ? 'over' : (r.used === r.cap ? 'full' : '')) : '';
+    const num = (r.cap > 0 || r.zero) ? `${r.used} / ${r.cap}` : `${r.used}`;
+    const tail = r.cap > 0
+      ? (r.used > r.cap ? '超出上限' : (r.used === r.cap ? '已到上限' : ''))
+      : (r.zero || '无上限');
+    return `<span class="q ${state}"${r.note ? ` title="${esc(r.note)}"` : ''}>` +
+      `${esc(r.label)} <b>${esc(num)}</b>${tail ? ` <i>${esc(tail)}</i>` : ''}</span>`;
+  }).join('') + '</div>';
+}
+
+/// 抓进备选区之后，看看是不是超了规则配额 —— 只提示，不加限制
+function warnQuota(pageKey, pageLabel) {
+  const over = quotasFor(pageKey).filter((r) => r.cap > 0 && r.used > r.cap);
+  if (!over.length) return;
+  const first = over[0];
+  msgCf(`提示：${pageLabel ? pageLabel + '的' : ''}${first.label}已到规则上限（${first.cap} 个），多的这条照样加上了 —— ` +
+    `超出的部分只是提示，写表不受影响。`, 'warn');
+}
+
+function renderPickedPanes() {
+  if (!$('viewSpell').hidden) {
+    renderPickedInto($('detail'), ['spell'], '法术', 'spell');
+    return;
+  }
+  if (!$('viewClass').hidden && PICKED_PAGES[activePage]) {
+    renderPickedInto($('cfDetail'), PICKED_PAGES[activePage], PICKED_LABEL[activePage] || '', activePage);
+  }
+}
+
+/// 从备选区里拿掉一条词条（中间那一栏的 × 和右边备选区的 × 走同一个口）
+function removeStageEntry(id) {
+  stageState.items = stageState.items.filter((e) => !(e.kind === 'entry' && e.id === id));
+  renderStage();                       // 里面会连带把「已选」那一栏重画
+  if (!$('viewSpell').hidden) search().catch(() => {});
+  else if (activePage === 'classlevel') renderLevelList().catch(() => {});
+  else cfSearch().catch(() => {});
 }
 
 // ---------------------------------------------------------------- 目标表格
@@ -363,6 +1113,7 @@ async function loadTable(refresh) {
 /// （最典型的：备选区里还留着上一张卡挑的词条，一填就写进新卡）。
 function unloadCardState() {
   stageState.items = [];          // 备选区
+  hidePop();                      // 词条效果悬浮窗也收掉（「待办」那页留着，换完卡自己会重画）
   state.current = null;
   formState.info = null;          // 表单数据
   formState.loaded = false;
@@ -374,14 +1125,31 @@ function unloadCardState() {
   renderStage();
 }
 
-/// 换卡：先把上一张卡拿出去，再挂上新卡重新读一遍
+/// 换卡 / 导入卡：先把上一张卡拿出去，挂上新卡，**顺手把新卡读进备选区**，
+/// 最后把当前这一页对着新卡重读。
+///
+/// 「导入」和「读卡」在这里是一件事：换到哪张卡，备选区里就是哪张卡的内容，
+/// 不需要再单独点一次「读卡」。
 async function afterTableChange(t, note) {
   unloadCardState();              // 1) 先把上一张卡从工作区拿出去
   state.table = t || state.table; // 2) 再挂上新卡
   await loadTable(true);          // 3) 读新卡（loadTable 里会连带 renderStage 和进度条）
   renderTree();
-  await reloadCurrentView();      // 4) 当前这一页对着新卡重读
-  msg(note || '已换卡', 'ok');
+  let read = { fields: 0, entries: 0 };
+  let readErr = '';
+  try {
+    read = await readCardIntoStage();   // 4) 导入即读卡：这张卡里填过的东西进备选区
+  } catch (e) {
+    readErr = e.message;
+  }
+  renderStage();
+  await reloadCurrentView();      // 5) 当前这一页对着新卡重读
+  const total = read.fields + read.entries;
+  const tail = total
+    ? '，并把这张卡里的 ' + total + ' 项读进备选区'
+    : '（这张卡是空的，备选区没东西）';
+  if (readErr) msg(note ? note + '；但这张卡读不出来：' + readErr : '换卡了，但这张卡读不出来：' + readErr, 'err');
+  else msg((note || '已换卡') + tail, 'ok');
 }
 
 /// 当前显示的是哪一页，就把它重新读一遍（换卡后调用）
@@ -399,6 +1167,11 @@ async function reloadCurrentView() {
       else await cfSearch();
       return;
     }
+    // 换卡之后致谢页也要跟着重读：作者信息是从卡里认的
+    if (!$('viewThanks').hidden) {
+      await renderThanks();
+      return;
+    }
     await search();
   } catch (e) {
     msg('刷新当前页失败：' + e.message, 'err');
@@ -413,7 +1186,7 @@ async function tableOp(kind) {
   try {
     const r = await post(kind === 'new' ? '/api/table/new' : '/api/table/open', { dir, name: kind === 'new' ? '新人物卡.xlsx' : t.name });
     if (r.cancelled) { say('已取消'); return; }
-    await afterTableChange(r.table, kind === 'new' ? '已新建表格（备选区已清空）' : '已切换目标表格（备选区已清空）');
+    await afterTableChange(r.table, kind === 'new' ? '已新建表格' : '已切换目标表格');
   } catch (e) {
     say('操作失败：' + e.message + '\n（可以点「手动选择」用内置的文件浏览挑表）', 'err');
   }
@@ -471,7 +1244,7 @@ async function useTable(path) {
   try {
     const r = await post('/api/table/use', { path });
     $('picker').hidden = true;
-    await afterTableChange(r.table, '已切换目标表格：' + r.table.name + '（备选区已清空）');
+    await afterTableChange(r.table, '已切换目标表格：' + r.table.name);
   } catch (e) {
     $('pkMsg').textContent = e.message;
   }
@@ -482,7 +1255,7 @@ async function createTable() {
   try {
     const r = await post('/api/table/create', { dir: pkDir, name });
     $('picker').hidden = true;
-    await afterTableChange(r.table, '已新建表格：' + r.table.name + '（备选区已清空）');
+    await afterTableChange(r.table, '已新建表格：' + r.table.name);
   } catch (e) {
     $('pkMsg').textContent = e.message;
   }
@@ -555,7 +1328,8 @@ async function loadPageInfo() {
 function renderCfTarget() {
   const i = cf.info || {};
   if (i.title) $('cfQ').placeholder = `搜索${i.title}（名称 / 英文名 / 正文）…`;
-  const ph = $('cfDetail').querySelector('.empty');
+  // 「已选」那一栏（种族 / 专长 / 全部速查）不是占位提示，别被这里改掉
+  const ph = PICKED_PAGES[activePage] ? null : $('cfDetail').querySelector('.empty');
   if (ph) ph.textContent = `从左边点一条${i.title || '条目'}，这里显示完整规则`;
   if (!i.exists) {
     $('cfLocked').hidden = true;
@@ -641,6 +1415,18 @@ function effectStaged(e, key = 'background') {
     (x) => x.kind === 'effect' && x.formKey === key && x.label === e.label && x.text === e.text);
 }
 
+/// 「工具熟练 / 语言」这两样，规则书给的常常是一句让你自己挑的指令
+/// （`选择一种工匠工具（参见第六章）`、`一门你自选的语言`），不是具体名字。
+/// 这种整句不能写进卡里的值格（值格只放 `书法工具`、`龙语` 这种），
+/// 得先让用户挑好具体的一样。判定的正则与服务端 `isConcreteAssignment` 保持一致。
+const PICK_ONE_LABELS = ['工具熟练', '语言'];
+const MENU_HINT = /(选择|任选|自选|挑选|所选|参见|见第|一种|一门|一项|一套|两个|两门|两项|但不能说|你所说|理解|或者一)/;
+function isPickOneEffect(e) {
+  if (!PICK_ONE_LABELS.includes(e.label)) return false;
+  const t = (e.text || '').trim().replace(/[。．.]+$/, '');
+  return !t || MENU_HINT.test(t);
+}
+
 /// 把一条效果抓进备选区（出身效果、职业效果共用；写表时按 formKey 分流）。
 /// `panel: true` 表示「这一整条是职业核心特质」，写表时进卡片「职业能力」面板。
 function addStageEffect(e, key = 'background', page = '背景', panel = false) {
@@ -687,12 +1473,27 @@ async function renderBackgroundList() {
   }
   const effects = parseBackgroundEffects(r.text);
   $('cfCount').textContent = `${name} · ${effects.length} 项`;
-  list.innerHTML = effects.map((e, i) => `
+  const pickHint = (label) =>
+    (label === '语言' ? '写具体语言，例如：龙语' : '写具体工具，例如：铁匠工具');
+  list.innerHTML = effects.map((e, i) => {
+    // 要自己挑的那种（`选择一种工匠工具`）不给「+」，改给一个小输入框：
+    // 挑好的具体名字才进备选区，卡里的值格也就不会被整句指令占住
+    let act = '<button class="add" title="抓进备选区">+</button>';
+    if (effectStaged(e)) act = '<span class="intray">已在备选区</span>';
+    else if (isPickOneEffect(e)) {
+      act = `<span class="pickone">
+        <input class="pickin" value="" placeholder="${esc(pickHint(e.label))}"
+               title="规则书给的是要你自己挑的，把挑好的具体名字写这里，再按 +">
+        <button class="add pick" title="把挑好的这一样写进备选区">+</button>
+      </span>`;
+    }
+    return `
     <div class="item" data-i="${i}">
       <div class="t">${esc(e.label)}</div>
-      ${effectStaged(e) ? '<span class="intray">已在备选区</span>' : '<button class="add" title="抓进备选区">+</button>'}
+      ${act}
       <div class="s">${esc(e.text)}</div>
-    </div>`).join('') || '<div class="empty">这条出身没有分条的效果。</div>';
+    </div>`;
+  }).join('') || '<div class="empty">这条出身没有分条的效果。</div>';
 
   const show = (i) => {
     [...list.querySelectorAll('.item')].forEach((x) => x.classList.toggle('on', +x.dataset.i === i));
@@ -706,11 +1507,29 @@ async function renderBackgroundList() {
     el.onclick = (ev) => {
       if (ev.target.classList.contains('add')) {
         ev.stopPropagation();
-        addStageEffect(effects[+el.dataset.i]);
+        const e = effects[+el.dataset.i];
+        // 「要自己挑」的那条：把输入框里挑好的具体名字抓走，空的就退回输入框
+        if (ev.target.classList.contains('pick')) {
+          const box = el.querySelector('.pickin');
+          const v = ((box && box.value) || '').trim();
+          if (!v) { if (box) box.focus(); return; }
+          addStageEffect({ label: e.label, text: v });
+          return;
+        }
+        addStageEffect(e);
         return;
       }
       show(+el.dataset.i);
     };
+    const box = el.querySelector('.pickin');
+    if (box) {
+      box.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'Enter') return;
+        ev.preventDefault();
+        const btn = el.querySelector('.add.pick');
+        if (btn) btn.click();
+      });
+    }
   });
   show(0);
 }
@@ -1025,30 +1844,30 @@ async function renderLevelList() {
     </div>`;
   }).join('') || '<div class="empty">没抽出这一级的特性，规则书里没写？</div>';
   [...list.querySelectorAll('.item')].forEach((el) => {
+    const f = mine[+el.dataset.i];
+    const popData = {
+      id: levelFeatId(f),
+      kind: 'classFeature',
+      name: f.name,
+      en: `${f.level}级 · ${f.from}${f.kind === 'sub' ? ' · 子职' : ''}`,
+      tags: [f.from, `${f.level}级`, f.kind === 'sub' ? '子职' : '职业', (f.rule || {}).book || ''],
+      fields: {},
+      text: f.text || '',
+    };
     el.onclick = (ev) => {
-      const f = mine[+el.dataset.i];
       if (ev.target.classList.contains('add')) {
         ev.stopPropagation();
         addStageFeature(f);
         return;
       }
-      showLevelFeat(f, el);
+      showPopData(popData, el, { onAdd: () => addStageFeature(f) });
     };
   });
-  if (mine.length) showLevelFeat(mine[0], list.querySelector('.item'));
+  renderPickedPanes();
 }
 
 const levelFeatId = (f) => `lv:${f.level}:${f.name}`;
 
-/// 等级页的详情栏（正文来自哪本、目录怎么走，一并标出来）
-function showLevelFeat(f, el) {
-  [...$('cfList').querySelectorAll('.item')].forEach((x) => x.classList.toggle('on', x === el));
-  const r = f.rule || {};
-  $('cfDetail').innerHTML = `
-    <div class="detail-head">${esc(f.name)}<span class="en">${f.level}级 · ${esc(f.from)}</span></div>
-    <div class="detail-text">${esc(f.text)}</div>
-    <div class="rule-meta">${esc(r.book || '')}${(r.crumbs || []).length ? ' · ' + esc(r.crumbs.join(' › ')) : ''}</div>`;
-}
 
 /// 把一条特性抓进备选区（写表时走「职业特性」那一列，跟职业特性页同一个落点）
 function addStageFeature(f) {
@@ -1061,9 +1880,14 @@ function addStageFeature(f) {
     id,
     name: f.name,
     subtitle: `${f.level}级 · ${f.from}`,
+    // 正文也一起带上：这一条的 id 不是词条库里的 id（`lv:等级:名字`），
+    // 「已选」那一栏点它看效果时走不了 /api/entry，得用这份本地正文
+    text: f.text || '',
+    tags: [f.from, `${f.level}级`, f.kind === 'sub' ? '子职' : '职业', (f.rule || {}).book || ''],
   });
   renderStage();
   msgCf('已加入备选区', 'ok');
+  warnQuota('classlevel', '职业特性');
   renderLevelList().catch(() => {});
 }
 
@@ -1100,6 +1924,7 @@ function renderCfFilters() {
 async function cfSearch() {
   // 背景 / 职业这两个只看规则书，没有词条库可搜，列表由各自的渲染器写
   if (activePage === 'background' || activePage === 'classinfo' || activePage === 'classlevel') return;
+  hidePop();
   const type = (cf.info && cf.info.type) || 'classFeature';
   const url = `/api/search?type=${encodeURIComponent(type)}&q=${encodeURIComponent(cf.q)}&limit=400` +
     (cfFilterQuery() ? '&' + cfFilterQuery() : '');
@@ -1127,33 +1952,23 @@ async function cfSearch() {
       if (ev.target.classList.contains('add')) {
         ev.stopPropagation();
         cfAddToTray(brief.id);
+        offerProficiencies(brief, el);   // 这条要是给熟练（尤其「……之一」），顺手处理
         return;
       }
       cfOpenEntry(brief, el);
     };
   });
+  renderPickedPanes();     // 列表画完，把「已选」那一栏也对着现在的备选区重画一遍
 }
 
+/// 点一条词条：钉住悬浮窗（效果不再往中间那一栏写——那一栏现在列「已选」）
 async function cfOpenEntry(brief, el) {
-  const r = await api('/api/entry?kind=' + encodeURIComponent(activePage) + '&id=' + encodeURIComponent(brief.id));
-  cf.current = r.entry;
   [...document.querySelectorAll('#cfList .item.on')].forEach((x) => x.classList.remove('on'));
   if (el) el.classList.add('on');
-  const e = r.entry;
-  const f = e.fields || {};
-  const tags = [];
-  if (f['职业']) tags.push(f['职业']);
-  if (f['子职']) tags.push(f['子职']);
-  if (f['等级']) tags.push(f['等级'] + '级');
-  if (e.source) tags.push(e.source);
-  $('cfDetail').innerHTML = `
-    <h2>${esc(e.name)}</h2>
-    <div class="en">${esc(e.en)}</div>
-    <div class="tagline">${tags.map((t, i) => `<span class="tag${i === 0 ? ' hot' : ''}">${esc(t)}</span>`).join('')}</div>
-    <div class="add"><button class="primary" id="cfAdd" ${stageHasEntry(e.id) ? 'disabled' : ''}>${stageHasEntry(e.id) ? '已在备选区' : '+ 抓进备选区'}</button></div>
-    <pre>${esc(e.text)}</pre>`;
-  const btn = $('cfAdd');
-  if (btn && !stageHasEntry(e.id)) btn.onclick = () => cfAddToTray(e.id);
+  await showPop(brief.id, typeOfFormKey(ENTRY_PAGE[(brief.type || '')] || activePage), el, {
+    pinned: true,
+    onAdd: () => cfAddToTray(brief.id),
+  });
 }
 
 /// 词条页的「+」：一律抓进最右边的备选区（页内填入区已经取消）
@@ -1172,12 +1987,27 @@ function msgCf(text, cls) {
 // ---------------------------------------------------------------- 设计树
 // ---------------------------------------------------------------- 表单页（基本信息…）
 // 跟词条页完全不同的排版：一格一个字段，按分组卡片排，控件按字段类型给。
-const formState = { key: 'basic', info: null, loaded: false };
+const formState = { key: 'basic', info: null, loaded: false, seq: 0 };
 
 async function loadForm(refresh) {
-  formState.info = await api(
-    '/api/form?key=' + encodeURIComponent(formState.key) + (refresh ? '&refresh=1' : ''));
+  // 每次请求编个号：慢的请求回来晚了（刚点「基本信息」又点了别的页）就丢掉，
+  // 不然旧结果会把当前这一页覆盖掉——看起来就像"点基本信息跳到了别处"。
+  const seq = ++formState.seq;
+  const key = formState.key;
+  const info = await api(
+    '/api/form?key=' + encodeURIComponent(key) + (refresh ? '&refresh=1' : ''));
+  if (seq !== formState.seq || key !== formState.key) return;
+  formState.info = info;
+  formState.loaded = true;
   renderForm();
+}
+
+/// 换到另一张表单时先把上一张清掉：接口没回来之前别让人看到别的页
+function formPlaceholder() {
+  $('fmTitle').textContent = '载入中…';
+  $('fmSub').textContent = '';
+  $('fmSections').innerHTML = '<div class="empty">正在读这张卡…</div>';
+  $('fmLookup').hidden = true;
 }
 
 function renderForm() {
@@ -1202,6 +2032,7 @@ function renderForm() {
 const lkState = { q: '', filters: {}, items: [], loaded: false };
 
 async function lkSearch() {
+  hidePop();
   if (!lkState.loaded) {
     lkState.loaded = true;
     try { lkState.info = await api('/api/page?key=magic'); } catch (e) { lkState.info = {}; }
@@ -1217,6 +2048,7 @@ async function lkSearch() {
   const r = await api(url);
   lkState.items = r.items;
   $('lkCount').textContent = r.total > r.items.length ? `${r.items.length} / ${r.total} 条` : `${r.total} 条`;
+  $('lkQuota').innerHTML = quotaHtml(quotasFor('magic'));
   $('lkList').innerHTML = r.items.map((e, i) => `
     <div class="item" data-i="${i}">
       <div class="t">${esc(e.name)}<span class="en">${esc(e.en)}</span></div>
@@ -1226,22 +2058,16 @@ async function lkSearch() {
     </div>`).join('') || '<div class="empty">没有匹配的魔法物品</div>';
   [...$('lkList').querySelectorAll('.item')].forEach((el) => {
     const brief = lkState.items[+el.dataset.i];
+    const addLk = () => addStageEntry('magic',
+      { id: brief.id, name: brief.name, subtitle: brief.subtitle || '' }, '魔法物品', () => lkSearch());
     el.onclick = async (ev) => {
       if (ev.target.classList.contains('add')) {
         ev.stopPropagation();
-        addStageEntry('magic', { id: brief.id, name: brief.name, subtitle: brief.subtitle || '' },
-          '魔法物品', () => lkSearch());
+        addLk();
         return;
       }
-      const old = el.querySelector('pre');
-      if (old) { old.remove(); return; }
-      el.insertAdjacentHTML('beforeend', '<pre>正在读规则书…</pre>');
-      try {
-        const d = await api('/api/entry?kind=magic&id=' + encodeURIComponent(brief.id));
-        el.querySelector('pre').textContent = (d.entry && d.entry.text) || '';
-      } catch (e) {
-        el.querySelector('pre').textContent = '读不出来：' + e.message;
-      }
+      // 点一下把效果送进悬浮窗（原来是把正文塞在行下面，列表会被撑得很乱）
+      await showPop(brief.id, 'magicItem', el, { onAdd: addLk });
     };
   });
 }
@@ -1339,6 +2165,7 @@ function addStageEntry(pageKey, brief, pageLabel, after) {
   });
   renderStage();
   msgCf('已加入备选区', 'ok');
+  warnQuota(pageKey, pageLabel);
   if (after) after();
 }
 
@@ -1368,7 +2195,8 @@ function syncStage() {
     if (v && v !== (f.value || '')) {
       mine.set(f.field, {
         kind: 'field', formKey: key, page,
-        field: f.field, label: f.label, section: f.section, cell: f.cell, value: v,
+        field: f.field, label: f.label, section: f.section, row: f.row || '',
+        cell: f.cell, value: v,
       });
     } else {
       mine.delete(f.field);
@@ -1403,10 +2231,24 @@ function stageRowHtml(e) {
       <button class="link danger" data-del="${esc(e.id)}" title="从备选区移除">×</button>
     </div>`;
   }
+  if (e.kind === 'prof') {
+    return `<div class="trow" data-kind="prof" data-key="${esc(e.label)}" data-id="${esc(e.value)}">
+      <div class="n"><b>${esc(e.label)} · ${esc(e.value)}</b><small>写进卡里：这一行打 O</small></div>
+      <button class="link danger" data-del="${esc(e.value)}" title="从备选区移除">×</button>
+    </div>`;
+  }
   return `<div class="trow" data-kind="field" data-key="${esc(e.formKey)}" data-field="${esc(e.field)}">
-      <div class="n"><b>${esc(e.label)}</b><small>${esc(e.section)} · ${esc(e.cell)} → ${esc(e.value)}</small></div>
+      <div class="n"><b>${esc(fieldTitle(e))}</b><small>${esc(e.section)} · ${esc(e.cell)} → ${esc(e.value)}</small></div>
       <button class="link danger" data-del="${esc(e.field)}" title="从备选区移除">×</button>
     </div>`;
+}
+
+/// 表格版式里的字段，光有列名不够——「豁免」「初始值」「熟练」在六项属性 / 技能里
+/// 每行各一个，必须带上行名才认得出是哪一个：`力量 · 豁免`、`运动 · 熟练`。
+/// 单行字段（角色名、故乡…）没有 row，就照旧只显示列名。
+function fieldTitle(e) {
+  const row = (e.row || '').trim();
+  return row ? row + ' · ' + e.label : e.label;
 }
 
 function renderStage() {
@@ -1422,8 +2264,10 @@ function renderStage() {
   $('stageBadge').textContent = n ? `${n} 项待填` : '空';
   $('stageBadge').className = 'badge ' + (n ? 'warn' : 'ok');
   $('stageFill').disabled = !n;
+  renderTodoPop();          // 「待办」那页的备选区计数跟着走
   if (!n) {
     $('stageList').innerHTML = '<div class="empty">表单填的字段、词条页抓的词条都会进到这里，攒齐了一次性写进表。</div>';
+    renderPickedPanes();
     return;
   }
   const pages = [...new Set(stageState.items.map((e) => e.page))];
@@ -1431,6 +2275,185 @@ function renderStage() {
     ? pages.map((p) => `<div class="stage-group">${esc(p)}</div>` +
         stageState.items.filter((e) => e.page === p).map(stageRowHtml).join('')).join('')
     : stageState.items.map(stageRowHtml).join('');
+  // 点备选区里任意一条（× 除外）→ 弹那个能拖的悬浮窗介绍它是什么。
+  // 三类都管：词条、效果（出身 / 职业给的）、表单字段。
+  [...$('stageList').querySelectorAll('.trow')].forEach((el) => {
+    el.onclick = (ev) => {
+      if (ev.target.closest('[data-del]')) return;
+      const kind = el.dataset.kind;
+      const key = el.dataset.key;
+      const item = stageState.items.find((x) => {
+        if (x.kind !== kind) return false;
+        if (kind === 'entry') return x.id === el.dataset.id;
+        if (kind === 'effect') return x.formKey === key && x.label === el.dataset.id;
+        return x.formKey === key && x.field === el.dataset.field;
+      });
+      if (item) showStagePop(item, el);
+    };
+  });
+  // 中间那一栏（法术页 / 种族 / 专长 / 全部速查）列的是「已选」，跟着备选区一起变
+  renderPickedPanes();
+}
+
+/// 备选区里点一条 → 弹悬浮窗说明它是什么。三类都走这儿：
+///   词条（法术 / 职业特性 / 种族特性 / 专长 / 魔法物品）→ 照词条库画
+///   效果（出身 / 职业给的那几条）→ 就是那条效果的正文
+///   表单字段（力量·初始值、武器名、出身…）→ 值要是件装备 / 魔法物品 / 职业 / 子职 / 出身，
+///     就弹那一条的正文；都不是（纯数字、名字…）就说明这一格是什么、写进卡里哪儿
+async function showStagePop(item, anchor) {
+  if (item.kind === 'entry') return showStagedEntry(item, anchor);
+  if (item.kind === 'effect') {
+    showPopData({
+      kind: 'effect', hideAdd: true, name: item.label, en: '',
+      tags: [item.page || ''].filter(Boolean),
+      fields: {}, text: item.text || '（这条效果没有正文）',
+    }, anchor);
+    return;
+  }
+  if (item.kind === 'prof') {
+    showPopData({
+      kind: 'prof', hideAdd: true, name: item.label + ' · ' + item.value, en: '',
+      tags: ['备选区'],
+      fields: {
+        '打在哪': '卡里技能表「' + item.value + '」那一行的熟练格（B 列）',
+        '写成什么': 'O（卡里 X = 没有，O = 有）',
+      },
+      text: '点右下角「填入表格」才会写进卡里。',
+    }, anchor);
+    return;
+  }
+  const v = String(item.value == null ? '' : item.value).trim();
+  // 纯数字 / 打勾值不用去库里翻，翻也翻不到
+  const worthLooking = v && !/^[\d\s.,+\-]+$/.test(v) && !['X', 'O', '是', '否'].includes(v);
+  const hit = worthLooking ? await lookupByName(v) : null;
+  if (hit) { showPopData(hit, anchor); return; }
+  showPopData({
+    kind: 'field', hideAdd: true, name: fieldTitle(item), en: '',
+    tags: [item.page || '', item.section || ''].filter(Boolean),
+    fields: { '当前值': v || '（空）', '写进': (item.cell || '未识别') + (item.page ? '（' + item.page + '）' : '') },
+    text: '这是表单里改过的一格：点右下角「填入表格」，它才写进卡里。',
+  }, anchor);
+}
+
+/// 备选区里点一条词条 → 弹悬浮窗介绍它是什么。
+/// 词条库里有就照库里的画；没有（比如从卡里读出来的生名字）就用手上这份凑一条，
+/// 免得点了半天什么反应都没有。
+// ------------------------------------------------------------ 熟练项（种族 / 专长 / 背景给的）
+/// 卡里技能表那 18 个技能名（从「基本信息」表单里读，不写死）。
+let skillNameCache = null;
+async function cardSkillNames() {
+  if (skillNameCache) return skillNameCache;
+  const names = [];
+  try {
+    const info = await api('/api/form?key=basic');
+    for (const s of (info.sections || [])) {
+      if (s.title !== '技能') continue;
+      for (const f of (s.fields || [])) {
+        if (f.kind === 'label' && f.value) names.push(f.value);
+      }
+    }
+  } catch (e) { /* 读不到就先不认 */ }
+  skillNameCache = names;
+  return names;
+}
+
+/// 从一条词条的正文里认出它给的**技能**熟练：
+///   「你具有洞悉、察觉或求生之一技能的熟练」→ {choose:true,  names:[洞悉,察觉,求生]}
+///   「你具有察觉技能的熟练」              → {choose:false, names:[察觉]}
+/// 只认技能表里真有的名字，认不出（武器 / 护甲 / 工具那种，卡里也没有勾选格）就返回 null。
+async function proficiencyPick(text) {
+  const t = String(text || '');
+  if (!t.includes('熟练')) return null;
+  const skills = await cardSkillNames();
+  if (!skills.length) return null;
+  // 「……之一 / 其一」：候选就是它前面那句话里出现的技能名
+  const one = /([^。；\n]{0,60}?)(?:之一|其一)/.exec(t);
+  if (one) {
+    const names = skills.filter((s) => one[1].includes(s));
+    if (names.length) return { choose: true, names: names };
+  }
+  // 固定给的：句子里说了「技能的熟练」，把出现的技能名都算上
+  if (/技能的熟练|技能熟练/.test(t)) {
+    const names = skills.filter((s) => t.includes(s));
+    if (names.length) return { choose: false, names: names };
+  }
+  return null;
+}
+
+/// 抓一条熟练进备选区（点「填入表格」时才真写进卡里打 O）
+function addStageProf(name, label) {
+  const lab = label || '技能熟练';
+  if (!name) return;
+  if (stageState.items.some((x) => x.kind === 'prof' && x.label === lab && x.value === name)) return;
+  stageState.items.push({ kind: 'prof', formKey: 'prof', page: '熟练', label: lab, value: name });
+  renderStage();
+}
+
+/// 抓一条词条时顺手看它给不给熟练：固定给的直接进备选区；写「……之一」的
+/// 把候选摆到悬浮窗里让玩家挑，挑完再进备选区。
+async function offerProficiencies(brief, anchor) {
+  const kind = typeOfFormKey(ENTRY_PAGE[brief.type || ''] || activePage);
+  let entry = null;
+  try {
+    entry = (await api('/api/entry?kind=' + encodeURIComponent(kind) + '&id=' + encodeURIComponent(brief.id))).entry;
+  } catch (e) {
+    return;
+  }
+  if (!entry) return;
+  const pick = await proficiencyPick((entry.summary || '') + '\n' + (entry.text || ''));
+  if (!pick) return;
+  if (!pick.choose) {
+    pick.names.forEach((n) => addStageProf(n));
+    msgCf('这条给的技能熟练已经抓进备选区：' + pick.names.join('、'), 'ok');
+    return;
+  }
+  showPopData(Object.assign({}, entry, {
+    kind: kind,
+    choices: pick.names,
+    choicesHint: '这条要你挑一个技能熟练，挑完会进备选区，点「填入表格」再写进卡里：',
+  }), anchor, { onChoice: (v) => addStageProf(v) });
+}
+
+async function showStagedEntry(item, anchor) {
+  const kind = typeOfFormKey(item.formKey);
+  try {
+    const r = await api('/api/entry?kind=' + encodeURIComponent(kind) + '&id=' + encodeURIComponent(item.id));
+    showPopData(Object.assign({ kind: kind }, r.entry), anchor);
+    return;
+  } catch (e) { /* 词条库里没这条，下面兜一条 */ }
+  showPopData({
+    id: item.id, kind: kind, name: item.name, en: item.subtitle || '',
+    tags: [], fields: {}, text: '',
+  }, anchor);
+}
+
+/// 拿一个名字去两套库里找：先装备 / 魔法物品（词条库），再职业 / 子职 / 出身（规则库）。
+/// 找到就返回一份能直接画进悬浮窗的数据，找不到回 null。
+async function lookupByName(name) {
+  for (const kind of ['equipment', 'magicItem']) {
+    try {
+      const r = await api('/api/entry?kind=' + kind + '&id=' + encodeURIComponent(kind + ':' + name));
+      return Object.assign({ kind: kind, hideAdd: true }, r.entry);
+    } catch (e) { /* 这一类里没有 */ }
+  }
+  // 子职业要连主职业一起查（规则库的键是 `subclass|主职业|子职业`）
+  const cls = (stageState.items.find((x) => x.kind === 'field' && x.field === 'cls') || {}).value || '';
+  for (const [kind, withCls] of [['class', false], ['background', false], ['subclass', true]]) {
+    try {
+      const q = '/api/rule?kind=' + kind + (withCls && cls ? '&cls=' + encodeURIComponent(cls) : '') +
+        '&name=' + encodeURIComponent(name);
+      const r = await api(q);
+      if (r.found) {
+        return {
+          kind: kind, hideAdd: true,
+          name: r.title || r.name || name, en: '',
+          tags: [r.book || ''].filter(Boolean),
+          fields: {}, text: r.text || '',
+        };
+      }
+    } catch (e) { /* 规则库里没有 */ }
+  }
+  return null;
 }
 
 /// 把备选区里的东西一并写进表：字段走 /api/form/fill，词条走 /api/page/fill
@@ -1447,6 +2470,8 @@ async function fillStage() {
     } else if (e.kind === 'entry') {
       if (!byPage.has(e.formKey)) byPage.set(e.formKey, []);
       byPage.get(e.formKey).push(e.name);
+    } else if (e.kind === 'prof') {
+      // 熟练单独走 /api/prof/fill（下面统一发一次），别当成表单字段
     } else {
       if (!byForm.has(e.formKey)) byForm.set(e.formKey, {});
       byForm.get(e.formKey)[e.field] = e.value;
@@ -1502,7 +2527,19 @@ async function fillStage() {
       if (r.note) lines.push('· ' + r.note);
       if (r.backup) backup = r.backup;
     }
+    // 熟练项（种族特性 / 专长里挑出来的）单独走 /api/prof/fill，先把它们抄下来
+    const profs = stageState.items.filter((e) => e.kind === 'prof');
     stageState.items = [];
+    if (profs.length) {
+      const r = await post('/api/prof/fill', {
+        skills: profs.filter((e) => e.label !== '豁免熟练').map((e) => e.value),
+        saves: profs.filter((e) => e.label === '豁免熟练').map((e) => e.value),
+      });
+      count += (r.written || []).length;
+      (r.written || []).forEach((w) => lines.push(`${w.label}：${w.cell} 打 O（${w.name}）`));
+      (r.unmapped || []).forEach((u) => lines.push('· ' + u));
+      if (r.backup) backup = r.backup;
+    }
     // 写完必须重新问服务端要一份再画：renderForm() 用的是写入前拉到的那份数据，
     // 页面会停在旧值上（看着像"没写进去"）。
     if (formState.info) await loadForm(true);
@@ -1563,7 +2600,10 @@ function sectionHtml(s) {
 let comboOpen = null;
 
 function comboOptionsHtml(options, value, emptyLabel) {
-  return [''].concat(options).map((o) => {
+  // 卡里现在的值如果不在下拉选项里（比如「着装」那格卡自己的下拉只有 是/否，
+  // 而我们把空白值写成 X），也把它列出来——不然改选过别的就再也选不回 X 了。
+  const list = value && !options.includes(value) ? [value].concat(options) : options;
+  return [''].concat(list).map((o) => {
     const label = o === '' ? (emptyLabel || '—') : o;
     const tip = o === '' ? ' title="留空 = 这一格不动"' : '';
     return `<div class="combo-opt${o === value ? ' on' : ''}" data-v="${esc(o)}"${tip}>${esc(label)}</div>`;
@@ -1571,8 +2611,8 @@ function comboOptionsHtml(options, value, emptyLabel) {
 }
 
 /// editable=true 时输入框可以自己打字（原来挂 datalist 的那批字段）
-function comboHtml({ field, value = '', options = [], editable = false, type = 'text', emptyLabel = '', id = '', title = '', narrow = false }) {
-  return `<span class="combo${narrow ? ' narrow' : ''}"${title ? ` title="${esc(title)}"` : ''}>
+function comboHtml({ field, value = '', options = [], editable = false, type = 'text', emptyLabel = '', id = '', title = '', narrow = false, label = '' }) {
+  return `<span class="combo${narrow ? ' narrow' : ''}"${title ? ` title="${esc(title)}"` : ''}${label ? ` data-label="${esc(label)}"` : ''}>
     <input ${id ? `id="${id}"` : ''}data-field="${esc(field)}" value="${esc(value)}"
       ${type === 'number' ? 'type="number" min="0"' : 'type="text"'}
       placeholder="${editable ? '' : '选择…'}" ${editable ? '' : 'readonly'} autocomplete="off" spellcheck="false">
@@ -1659,6 +2699,33 @@ function comboPick(box, value) {
     // 只发 change。input 事件会被输入框自己的 comboFilter 接住，
     // 把候选列表筛成"只剩刚选的那一项"，下次就什么都点不到了。
     input.dispatchEvent(new Event('change', { bubbles: true }));
+    showItemPop(box, value);
+  }
+}
+
+/// 「装备与背包」里挑完装备的名字（武器 / 护甲）→ 在悬浮窗里介绍一下这件东西是什么。
+/// 词条库里装备的 id 就是 `equipment:名字`，魔法物品是 `magicItem:名字`；
+/// 两边都没有（「—轻甲—」那种分组标题、武僧 / 野蛮人那种职业行、自填的名字）就什么都不弹。
+const ITEM_FIELD_LABELS = ['武器名', '护甲名', '盾牌名'];
+
+async function showItemPop(box, name) {
+  if (!ITEM_FIELD_LABELS.includes(box.dataset.label || '')) return;
+  const v = String(name || '').trim();
+  if (!v || v.startsWith('—')) return;
+  for (const kind of ['equipment', 'magicItem']) {
+    try {
+      const r = await api('/api/entry?kind=' + kind + '&id=' + encodeURIComponent(kind + ':' + v));
+      const e = Object.assign({ kind: kind, hideAdd: true }, r.entry);
+      // 「武僧 / 野蛮人 / 龙术 / 舞蹈诗…」这一批不是真装备，是职业给的替代 AC
+      // （10 + 某调整值 + 敏捷调整值）。数据里那条「护甲等级 / 敏捷加值」是抽取时
+      // 存下的旧数字，跟公式对不上，显示出来只会误导 —— 只留公式那一行。
+      if (e.fields && String(e.fields['属性'] || '').includes('调整值')) {
+        delete e.fields['护甲等级'];
+        delete e.fields['敏捷加值'];
+      }
+      showPopData(e, box);
+      return;
+    } catch (e) { /* 这一类里没有这条，试下一类 */ }
   }
 }
 
@@ -1728,7 +2795,7 @@ function fieldHtml(f, inTable) {
       return comboHtml({
         field: f.field, value: f.value, options: f.options, editable: true,
         type: f.kind === 'number' ? 'number' : 'text',
-        title: `${f.label} ${f.cell}`, narrow: true,
+        title: `${f.label} ${f.cell}`, narrow: true, label: f.label,
       });
     }
     return `<input data-field="${esc(f.field)}" value="${esc(f.value)}" ${t}
@@ -1871,29 +2938,34 @@ const TREE = [
   ] },
   // 「属性与技能」这一支整个删了：六项属性 / 豁免 / 技能 / 工具都并进第一页「基本信息」，
   // 不需要第二个入口（那一页的表单还在，走 /api/form?key=attrs，留给以后要拆回来用）
-  { id: 'feat', title: '专长', sheet: '主要', view: 'page', page: 'feat', children: [
-    { id: 'feat.pick', title: '专长 / 属性提升', sheet: '主要', view: 'page', page: 'feat', done: true },
-  ] },
-  { id: 'gear', title: '装备与背包', sheet: '背包', view: 'form', form: 'gear', children: [
+  // 「专长」下面那条「专长 / 属性提升」删了——上级点开就是同一个页面，
+  // 不再挂一个只有一个子项、还指着同一页的子菜单
+  { id: 'feat', title: '专长', sheet: '主要', view: 'page', page: 'feat', done: true },
+  // 「装备与背包」这一级点开就是**背包**那一页（写卡里 `背包` 表的存货格子）；
+  // 武器 / 护甲 / 盾写的是另一批格子（`主要` 表），单独挂在下面，别和背包混成一页。
+  { id: 'gear', title: '装备与背包', sheet: '背包', view: 'form', form: 'bag', done: true, children: [
     { id: 'gear.weapon', title: '武器 / 护甲 / 盾', sheet: '主要', view: 'form', form: 'gear', done: true },
-    { id: 'gear.item', title: '物品 / 货币' },
-    { id: 'gear.load', title: '负重', sheet: '主要', view: 'form', form: 'gear', done: true },
+    // 魔法物品挂在「装备与背包」下面：它写的还是「主要」表那几块（武器 / 护甲 / 盾 / 奇物），
+    // 跟装备是一家的东西，只是多一个上面那块规则书速查
+    { id: 'gear.magic', title: '魔法物品', sheet: '主要', view: 'form', form: 'magic', done: true },
   ] },
-  // 魔法物品区在「主要」表：武器行30-36(F31 同调) / 护甲盾行38-40 / 奇物行41 /
-  // 右侧 AM38「已同调的装备」汇总。空白卡是老版本，这一块的位置不一样。
-  // 「魔法物品」下面那四条（武器 / 护甲 / 盾 / 奇物 / 已同调）去掉了：
-  // 它们本来就是这个页面的几块，点这一条就是整块（上面速查 + 下面编辑格）
-  { id: 'magic', title: '魔法物品', sheet: '主要', view: 'form', form: 'magic', done: true },
   { id: 'spell', title: '法术', sheet: '法术书', view: 'spell', children: [
     { id: 'spell.list', title: '法术列表', view: 'spell', done: true },
   ] },
   // 最末尾：全部速查——法术 / 职业特性 / 专长 / 种族 / 魔法物品一起搜。
   // 抓进备选区的每一条记着自己属于哪一类，写表时各走各的页。
   { id: 'all', title: '全部速查', view: 'page', page: 'all', done: true },
+  // 速查后面接一栏致谢：这张卡是「似雨悲灵」做的，署名 / QQ / 反馈群就写在卡的
+  // 「更新」工作表里，这一页直接从卡里读出来显示（服务端按内容认，不认格子）。
+  { id: 'thanks', title: '致谢', sheet: '更新', view: 'thanks', done: true },
   // 「伙伴与据点」「其他」两条删了——里面那几张表还没做页面，先不占设计树的位置
 ];
 
 const treeState = { selected: 'spell.list', open: new Set(['spell']) };
+
+/// 合并 / 删掉过的老节点：localStorage 里还记着的话，回到合并后那一条，
+/// 别让「上次停在这一页」的人一点开就掉到别的页去。
+const TREE_ALIASES = { 'feat.pick': 'feat', 'gear.item': 'gear', 'magic': 'gear.magic' };
 
 function findNode(id, nodes = TREE) {
   for (const n of nodes) {
@@ -1967,23 +3039,36 @@ function selectNode(id) {
     $('viewForm').hidden = true;
     $('viewClass').hidden = true;
     $('viewBlank').hidden = true;
+    $('viewThanks').hidden = true;
+    // 中间那一栏列「已选法术」：这是给你看自己挑了哪些的，写表还是走备选区
+    renderPickedPanes();
     // 列表上的「已在备选区」是按当时的备选区算出来的，回来时重画一次才准
     search().catch(() => {});
   } else if (node.view === 'form') {
     $('viewSpell').hidden = true;
     $('viewClass').hidden = true;
     $('viewBlank').hidden = true;
+    $('viewThanks').hidden = true;
     $('viewForm').hidden = false;
-    formState.key = node.form || 'basic';
-    if (!formState.loaded) { formState.loaded = true; loadForm().catch(() => {}); }
-    else loadForm(true).catch(() => {});
+    const key = node.form || 'basic';
+    // 同一张表单已经画好了就别重画（会把刚填一半的输入冲掉，也没必要）；
+    // 换了页才去读，读之前先把上一页的 DOM 换掉。
+    const sameForm = formState.key === key && formState.info && !formState.info.error;
+    formState.key = key;
+    if (!sameForm) {
+      formState.info = null;
+      formPlaceholder();
+      loadForm().catch(() => {});
+    }
   } else if (node.view === 'page') {
     $('viewSpell').hidden = true;
     $('viewClass').hidden = false;
     $('viewForm').hidden = true;
     $('viewBlank').hidden = true;
+    $('viewThanks').hidden = true;
     initPageState(node.page || 'class');
     // 每个页面首次进来才去读卡（省启动时间）
+    renderPickedPanes();
     if (!cf.loaded) {
       cf.loaded = true;
       loadPageInfo().then(() => cfSearch()).catch(() => {});
@@ -1992,10 +3077,18 @@ function selectNode(id) {
       renderCfFilters();
       cfSearch().catch(() => {});
     }
+  } else if (node.view === 'thanks') {
+    $('viewSpell').hidden = true;
+    $('viewClass').hidden = true;
+    $('viewForm').hidden = true;
+    $('viewBlank').hidden = true;
+    $('viewThanks').hidden = false;
+    renderThanks().catch(() => {});
   } else {
     $('viewSpell').hidden = true;
     $('viewClass').hidden = true;
     $('viewForm').hidden = true;
+    $('viewThanks').hidden = true;
     $('viewBlank').hidden = false;
     $('phCrumb').textContent = (pathTo(id) || []).map((n) => n.title).join(' › ');
     $('phTitle').textContent = node.title;
@@ -2004,6 +3097,48 @@ function selectNode(id) {
       : '这一步还没做，先占位';
   }
   try { localStorage.setItem('quickref.node', id); } catch (e) {}
+}
+
+/// 「致谢」那一页。
+///
+/// 人物卡的作者 / QQ / 反馈群从卡里的「更新」表读 —— 服务端按内容认、不钉格子。
+/// 作者改了更新表（或者换了署名），这一页跟着变，不用动代码。
+/// 规则数据来源和「这工具是怎么做的」那两段是写死的。
+async function renderThanks() {
+  const box = $('thanksBody');
+  if (!box) return;
+  if (!box.dataset.ready) {
+    box.innerHTML = '<p class="th-p dim">正在读卡里的作者信息…</p>';
+  }
+  let c = {};
+  try { c = (await api('/api/credits')) || {}; } catch (e) { c = {}; }
+
+  const rows = [];
+  if (c.author) rows.push(['作者', `<b>${esc(c.author)}</b>`]);
+  if (c.qq) rows.push(['QQ', `<code>${esc(c.qq)}</code>`]);
+  if (c.group) rows.push(['反馈兼交流群', `<code>${esc(c.group)}</code>`]);
+  if (c.thanks) {
+    const body = esc(String(c.thanks).replace(/^特别鸣谢[：:]?\s*/, '')).replace(/\r?\n/g, '<br>');
+    rows.push(['其它协助者', body]);
+  }
+
+  box.dataset.ready = '1';
+  box.innerHTML = `
+    <h2 class="th-title">致谢</h2>
+
+    <div class="th-sec">
+      <h3>人物卡</h3>
+      <p class="th-p">这个工具用的车卡模板出自 <b>${esc(c.author || '似雨悲灵')}</b>
+        （《DND 5.5E 人物卡〈悲灵ver.〉》），由作者提供使用、并经同意做过二次修改。</p>
+      ${rows.map(([k, v]) => `<div class="th-row"><span class="th-k">${esc(k)}</span>` +
+        `<span class="th-v">${v}</span></div>`).join('')}
+    </div>
+
+    <div class="th-sec">
+      <h3>规则数据</h3>
+      <p class="th-p">词条正文（法术 / 职业特性 / 专长 / 种族特性 / 魔法物品）来自
+        <a href="https://5echm.kagangtuya.top/" target="_blank" rel="noreferrer">5E 不全书</a>。</p>
+    </div>`;
 }
 
 // ---------------------------------------------------------------- 事件
@@ -2093,35 +3228,48 @@ $('btnResetCard').onclick = () => {
 // ---------------------------------------------------------------- 读卡
 /// 读卡 = 用「这张卡里现有的内容」**替换**备选区，再让页面把「已在备选区」反映出来。
 /// 所以先把上一张卡的东西清出去，读进来的就是干净的这一张卡。
+/// 把当前卡里填过的东西读进备选区。**只管往里放**，不动页面、不动提示——
+/// 「读卡」按钮和「换卡/导入」都要用它，但两者的提示、重画不一样。
+/// 返回 `{fields, entries}` 两个数。注意：跟空白模板一样的默认值（熟练 X、出身
+/// 自定义背景…）服务端已经滤掉了，所以新建的空卡读出来就是 0 项。
+async function readCardIntoStage() {
+  const r = await api('/api/card');
+  for (const f of (r.fields || [])) {
+    stageState.items.push({
+      kind: 'field', formKey: f.formKey, page: f.page,
+      field: f.field, label: f.label, section: f.section, row: f.row || '',
+      cell: f.cell, value: f.value,
+    });
+  }
+  for (const e of (r.entries || [])) {
+    stageState.items.push({
+      kind: 'entry', formKey: e.formKey, page: e.page,
+      id: e.id, name: e.name, subtitle: e.subtitle || '',
+    });
+  }
+  return { fields: (r.fields || []).length, entries: (r.entries || []).length };
+}
+
+/// 页面上的「已在备选区」标记、表单里的值，跟着备选区重画一遍
+function refreshStagedMarks() {
+  if (!$('viewForm').hidden) renderForm();
+  if (!$('viewSpell').hidden) search().catch(() => {});
+  if (!$('viewClass').hidden) {
+    if (activePage === 'classinfo') renderClassList().catch(() => {});
+    else if (activePage === 'classlevel') renderLevelList().catch(() => {});
+    else if (activePage === 'background') renderBackgroundList().catch(() => {});
+    else cfSearch().catch(() => {});
+  }
+}
+
 async function doReadCard() {
   unloadCardState();
   msg('正在读卡…');
   try {
-    const r = await api('/api/card');
-    for (const f of (r.fields || [])) {
-      stageState.items.push({
-        kind: 'field', formKey: f.formKey, page: f.page,
-        field: f.field, label: f.label, section: f.section, cell: f.cell, value: f.value,
-      });
-    }
-    for (const e of (r.entries || [])) {
-      stageState.items.push({
-        kind: 'entry', formKey: e.formKey, page: e.page,
-        id: e.id, name: e.name, subtitle: e.subtitle || '',
-      });
-    }
+    const n = await readCardIntoStage();
     renderStage();
-    // 让页面上的「已在备选区」标记也跟着反映出来
-    if (!$('viewForm').hidden) renderForm();
-    if (!$('viewSpell').hidden) search().catch(() => {});
-    if (!$('viewClass').hidden) {
-      if (activePage === 'classinfo') renderClassList().catch(() => {});
-      else if (activePage === 'classlevel') renderLevelList().catch(() => {});
-      else if (activePage === 'background') renderBackgroundList().catch(() => {});
-      else cfSearch().catch(() => {});
-    }
-    msg('已读卡：' + (r.fields || []).length + ' 个字段、' + (r.entries || []).length +
-        ' 条词条，都放进备选区了', 'ok');
+    refreshStagedMarks();
+    msg('已读卡：' + n.fields + ' 个字段、' + n.entries + ' 条词条，都放进备选区了', 'ok');
   } catch (e) {
     msg('读卡失败：' + e.message, 'err');
   }
@@ -2187,6 +3335,8 @@ $('stageList').addEventListener('click', (ev) => {
     stageState.items = stageState.items.filter((e) => !(e.kind === 'entry' && e.id === del));
     if (activePage === key) cfSearch().catch(() => {});
     else if (activePage === 'classlevel' && key === 'class') renderLevelList().catch(() => {});
+  } else if (row.dataset.kind === 'prof') {
+    stageState.items = stageState.items.filter((e) => !(e.kind === 'prof' && e.value === del && e.label === key));
   } else {
     stageState.items = stageState.items
       .filter((e) => !(e.kind === 'field' && e.formKey === key && e.field === del));
@@ -2208,6 +3358,8 @@ $('stageClear').onclick = () => {
   renderStage();
 };
 $('stageFill').onclick = fillStage;
+// 「备选区」标题行那颗「📋 待办」：打开悬浮窗第二页
+$('btnTodo').onclick = (e) => { e.stopPropagation(); openTodoPop($('btnTodo')); };
 $('stageReveal').onclick = () => {
   const t = (state.table || {}).path;
   if (t) reveal(t.replace(/[\\/][^\\/]*$/, ''), true);
@@ -2216,8 +3368,16 @@ $('picker').addEventListener('click', (e) => { if (e.target === $('picker')) $('
 $('confirm').addEventListener('click', (e) => { if (e.target === $('confirm')) closeConfirm(); });
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('q').focus(); $('q').select(); }
+  if (e.key === 'Escape') hidePop(true);
   if (e.key === 'Escape' && !$('picker').hidden) $('picker').hidden = true;
   if (e.key === 'Escape' && !$('confirm').hidden) closeConfirm();
+});
+// 点到别处就关掉悬浮窗（点列表行自己会重新钉一条）
+document.addEventListener('mousedown', (e) => {
+  if ($('pop').hidden) return;
+  if ($('pop').contains(e.target)) return;
+  if (e.target.closest && e.target.closest('.item')) return;
+  hidePop();
 });
 
 (async function init() {
@@ -2229,7 +3389,8 @@ document.addEventListener('keydown', (e) => {
   // 设计树：默认停在「法术 → 法术列表」，上次离开的节点会被记住
   let startNode = 'spell.list';
   try {
-    const saved = localStorage.getItem('quickref.node');
+    let saved = localStorage.getItem('quickref.node') || '';
+    if (saved && TREE_ALIASES[saved]) saved = TREE_ALIASES[saved];
     if (saved && findNode(saved)) startNode = saved;
   } catch (e) {}
   const chain = pathTo(startNode) || [];

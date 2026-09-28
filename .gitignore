@@ -24,7 +24,9 @@ __pycache__/
 
 # ---- 运行期状态 / 日志 ----
 .quickref.json
+实验区/quickref.exe
 实验区/out/
+实验区/cards/
 *.log
 
 # ---- Windows / macOS 垃圾 ----

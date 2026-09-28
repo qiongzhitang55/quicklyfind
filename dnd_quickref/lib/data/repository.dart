@@ -1,7 +1,7 @@
 /// 词条仓库：载入 dnd-data 里的词条，提供检索与筛选。
 ///
-/// 实际加载哪几类看 [dataFiles]；`equipment.json`（装备）数据在但还没接页面，
-/// 需要时把名字加进 [dataFiles] 即可。
+/// 实际加载哪几类看 [dataFiles]。装备（`equipment.json`）也在这里面：
+/// 「装备与背包」表单里点武器 / 护甲的名字时，要弹悬浮窗介绍它是什么。
 library;
 
 import 'dart:convert';
@@ -36,6 +36,7 @@ class Repository {
     'feats.json',
     'species.json',
     'magic_items.json',
+    'equipment.json',
   ];
 
   static const typeLabels = {
@@ -44,6 +45,7 @@ class Repository {
     'feat': '专长',
     'species': '种族特性',
     'magicItem': '魔法物品',
+    'equipment': '装备',
   };
 
   static Future<Repository> load(String dir) async {

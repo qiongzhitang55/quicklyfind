@@ -35,7 +35,10 @@ output files deterministically (no randomness, no wall-clock data).
       even rows = feature-name rows,  odd rows = description rows.
   e.g. 阿斯莫 B=1 -> names at row 2 (L..S), descriptions at row 3 (L..S);
        龙裔  B=2 -> names at row 4 (L..P), descriptions at row 5 (L..P).
-* Column E/F/G/H on the base row carry 通用特性/生物种类/体型/速度.
+* Column E/F/G/H carry the per-species 生物种类/体型/速度 block.  IMPORTANT: the E
+  list is a different list from column A (which holds species + sub-species), so
+  its row numbers do NOT line up with A's.  The metadata for a species must be
+  looked up by NAME in column E, never by the A-row's own row number.
 * Columns AY..BE (51..57) hold the race-major sub-species list; used only as
   a cross-check for sub-species naming.
 
@@ -212,6 +215,16 @@ def extract_species(sg):
     rows = read_species_rows(sg)
     names_by_row, descs_by_row = build_species_index(sg)
 
+    # 生物种类 / 体型 / 速度 在 E..H 那一块。注意：E 列是「这三个格子自己的名单」，
+    # 跟 A 列（种族 + 亚种的清单）**不是同一份**，两边的行号也不一样 —— 按 A 列的行号
+    # 去读 F/G/H 会配到隔壁种族的元数据（人类就读成了地底侏儒的
+    # 「你是类人生物…你也被视作侏儒」/ 小型）。所以按种族名去 E 列找行。
+    meta_row = {}
+    for r in range(2, 153):
+        n = sg.text(r, 5)
+        if n and n not in meta_row:
+            meta_row[n] = r
+
     # nearest preceding base row (block) for every A-row
     parent_of = {}
     cur = None
@@ -248,11 +261,12 @@ def extract_species(sg):
             unparsed.append((row, name, "feature row %d empty" % feat_row))
             continue
 
+        # 按种族名去 E 列找它自己的那一行（找不到的少数几个退回 A 行）
+        mrow = meta_row.get(base["name"], base["row"])
         base_meta = {
-            "生物种类": sg.text(base["row"], 6),
-            "体型": sg.text(base["row"], 7),
-            "速度": sg.text(base["row"], 8),
-            "通用特性": sg.text(base["row"], 5),
+            "生物种类": sg.text(mrow, 6),
+            "体型": sg.text(mrow, 7),
+            "速度": sg.text(mrow, 8),
         }
         is_sub = (row != base["row"])
 

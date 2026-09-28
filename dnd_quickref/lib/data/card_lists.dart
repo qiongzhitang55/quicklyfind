@@ -77,6 +77,62 @@ class CardLists {
   /// 只要武器 / 护甲名清单时用这个，免得为了一个下拉把整套清单都建出来
   static List<String> weaponsFrom(XlsxPatcher p) => _columnNames(p, '装备', '名称');
 
+  /// 盾牌 / 护甲清单：`装备` 表里表头为「装备名称」的那一列（v1.1.1 是 `AU`、
+  /// v1.0.12 是 `AP`、v1.0.0 是 `AQ`）。这一列前半段是盾牌，`护甲名称` 那个小标题
+  /// 之后才是护甲清单 —— `装备!BA12` 的 `VLOOKUP(主要!L40, AU12:AY48, …)` 查的
+  /// 就是后面这段。
+  ///
+  /// 不能写死列号：v1.0.12 上 `AP` 是「装备名称」，到 v1.1.1 上 `AP` 已经变成武器的
+  /// 「词条」列了 —— 写死就会把「轻型 / 双手 / 投掷（射程 20/60）…」当成护甲名。
+  static ({List<String> armors, List<String> shields}) equipNames(XlsxPatcher p) {
+    const sheet = '装备';
+    const none = (armors: <String>[], shields: <String>[]);
+    final column = _headerColumn(p, sheet, '装备名称');
+    if (column == null) return none;
+    final byRow = _byRow(scanCells(p.sheetXml(sheet)), column);
+
+    // `护甲名称` 那个小标题在第几行
+    var headerRow = 0;
+    for (var r = 2; r <= 120; r++) {
+      if (_textAt(p, sheet, byRow[r]) == '护甲名称') {
+        headerRow = r;
+        break;
+      }
+    }
+
+    final armors = <String>[];
+    final shields = <String>[];
+    if (headerRow == 0) {
+      // 认不出这个小标题（别的版式）：整列都当护甲，盾牌退回卡里的固定名
+      for (var r = 2; r <= 120; r++) {
+        final t = _textAt(p, sheet, byRow[r]);
+        if (_isEquipName(t) && !armors.contains(t)) armors.add(t);
+      }
+    } else {
+      // 护甲：小标题往下，连着 5 个空格算到头
+      var gap = 0;
+      for (var r = headerRow + 1; r <= 120; r++) {
+        final t = _textAt(p, sheet, byRow[r]);
+        if (t.isEmpty) {
+          if (++gap >= 5) break;
+          continue;
+        }
+        gap = 0;
+        if (_isEquipName(t) && !armors.contains(t)) armors.add(t);
+      }
+      // 盾牌：小标题**上面紧挨着**的那一段 —— 再往上还有武器名 / 「武器命中」那些块，
+      // 别一起收进来（卡里盾牌和护甲之间隔着一个 `FALSE` 占位，正好在这儿断开）
+      for (var r = headerRow - 1; r >= 2; r--) {
+        final t = _textAt(p, sheet, byRow[r]);
+        if (!_isEquipName(t)) break;
+        if (!shields.contains(t)) shields.insert(0, t);
+      }
+    }
+    if (armors.isEmpty) return (armors: shields, shields: const ['盾牌']);
+    if (shields.isEmpty) shields.add('盾牌');
+    return (armors: armors, shields: shields);
+  }
+
   /// 出身下拉只放**核心那十几条**（玩家手册2024 第四章的出身）。
   ///
   /// 卡里还挂着几十条扩展书的出身（剑湾、拉尼卡、斯翠海文、被遗忘的国度…），
@@ -122,6 +178,13 @@ bool _looksNumeric(String s) => RegExp(r'^\d+([.,]\d+)?$').hasMatch(s);
 /// 一个名字该不该收：别把分隔行、说明文字、数字当选项
 bool _isName(String t) =>
     t.isNotEmpty && t.length <= 24 && !t.contains('\n') && !_looksNumeric(t) && !t.startsWith('—');
+
+/// 装备 / 护甲名那种清单的一格：在 [_isName] 之上再要求有中文或字母，
+/// 免得把卡里公式还没算出来的占位（`-` / `FALSE`）当成名字。
+bool _isEquipName(String t) =>
+    _isName(t) &&
+    RegExp(r'[\u4e00-\u9fffA-Za-z]').hasMatch(t) &&
+    !RegExp(r'^(TRUE|FALSE|N/A)$', caseSensitive: false).hasMatch(t);
 
 Map<int, CellNode> _byRow(List<CellNode> cells, String column) {
   final out = <int, CellNode>{};
