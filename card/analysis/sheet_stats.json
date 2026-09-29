@@ -1,0 +1,226 @@
+[
+ {
+  "sheet": "背景",
+  "cells": 51,
+  "literal": 51,
+  "formula": 0,
+  "fills": {
+   "8": 1,
+   "0": 50
+  }
+ },
+ {
+  "sheet": "Irene",
+  "cells": 0,
+  "literal": 0,
+  "formula": 0,
+  "fills": {}
+ },
+ {
+  "sheet": "数据表",
+  "cells": 1374,
+  "literal": 1374,
+  "formula": 0,
+  "fills": {
+   "(无)": 1288,
+   "9": 2,
+   "8": 15,
+   "0": 14,
+   "FFF7F7EB": 35,
+   "4": 8,
+   "7": 12
+  }
+ },
+ {
+  "sheet": "职业",
+  "cells": 8012,
+  "literal": 8012,
+  "formula": 0,
+  "fills": {
+   "(无)": 5491,
+   "0": 52,
+   "4": 56,
+   "FFFFF2CC": 2,
+   "5": 26,
+   "FFFFD966": 3,
+   "8": 260,
+   "7": 22,
+   "FF92D050": 14,
+   "6": 7,
+   "FF4B177B": 11,
+   "FFFFC000": 12,
+   "9": 441,
+   "FFE0E5C2": 133,
+   "2": 1482
+  }
+ },
+ {
+  "sheet": "装备",
+  "cells": 1849,
+  "literal": 1849,
+  "formula": 0,
+  "fills": {
+   "(无)": 1348,
+   "FFEEEEEE": 169,
+   "0": 332
+  }
+ },
+ {
+  "sheet": "种族",
+  "cells": 2510,
+  "literal": 2510,
+  "formula": 0,
+  "fills": {
+   "(无)": 2510
+  }
+ },
+ {
+  "sheet": "专长与据点",
+  "cells": 793,
+  "literal": 793,
+  "formula": 0,
+  "fills": {
+   "(无)": 563,
+   "0": 166,
+   "9": 24,
+   "7": 40
+  }
+ },
+ {
+  "sheet": "背景数据",
+  "cells": 942,
+  "literal": 942,
+  "formula": 0,
+  "fills": {
+   "(无)": 634,
+   "2": 308
+  }
+ },
+ {
+  "sheet": "主要",
+  "cells": 633,
+  "literal": 633,
+  "formula": 0,
+  "fills": {
+   "8": 40,
+   "FFF7F7EB": 184,
+   "0": 334,
+   "7": 39,
+   "2": 24,
+   "4": 10,
+   "(无)": 1,
+   "FFFFD071": 1
+  }
+ },
+ {
+  "sheet": "背包",
+  "cells": 156,
+  "literal": 156,
+  "formula": 0,
+  "fills": {
+   "7": 2,
+   "0": 50,
+   "4": 3,
+   "8": 6,
+   "FFF7F7EB": 94,
+   "(无)": 1
+  }
+ },
+ {
+  "sheet": "盟友与魔宠",
+  "cells": 140,
+  "literal": 140,
+  "formula": 0,
+  "fills": {
+   "5": 2,
+   "FFF7F7EB": 32,
+   "0": 62,
+   "7": 14,
+   "2": 14,
+   "4": 12,
+   "(无)": 4
+  }
+ },
+ {
+  "sheet": "据点",
+  "cells": 44,
+  "literal": 44,
+  "formula": 0,
+  "fills": {
+   "9": 1,
+   "0": 18,
+   "FFF7F7EB": 24,
+   "7": 1
+  }
+ },
+ {
+  "sheet": "法术书",
+  "cells": 262,
+  "literal": 262,
+  "formula": 0,
+  "fills": {
+   "0": 62,
+   "FFDCE6F1": 200
+  }
+ },
+ {
+  "sheet": "法术大全",
+  "cells": 12422,
+  "literal": 12422,
+  "formula": 0,
+  "fills": {
+   "(无)": 900,
+   "FFFFCFAF": 2011,
+   "FFFEDEAB": 1172,
+   "FFDDD9C4": 1345,
+   "FFABD7FF": 641,
+   "FFFDE9D9": 1985,
+   "FFF5D7F1": 1236,
+   "FFFAFEC2": 754,
+   "4": 2378
+  }
+ },
+ {
+  "sheet": "圆形效应范围",
+  "cells": 31,
+  "literal": 31,
+  "formula": 0,
+  "fills": {
+   "(无)": 20,
+   "FFFFFF00": 11
+  }
+ },
+ {
+  "sheet": "骰娘导入",
+  "cells": 8,
+  "literal": 8,
+  "formula": 0,
+  "fills": {
+   "5": 4,
+   "FFF7F7EB": 1,
+   "0": 3
+  }
+ },
+ {
+  "sheet": "自定义调整栏",
+  "cells": 72,
+  "literal": 72,
+  "formula": 0,
+  "fills": {
+   "0": 34,
+   "FFF7F7EB": 38
+  }
+ },
+ {
+  "sheet": "更新",
+  "cells": 25,
+  "literal": 25,
+  "formula": 0,
+  "fills": {
+   "FF00B0F0": 6,
+   "6": 1,
+   "(无)": 17,
+   "0": 1
+  }
+ }
+]

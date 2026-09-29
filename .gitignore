@@ -9,14 +9,12 @@
 *.zip
 *.zip.bak-*
 
-# ---- 不入公开仓库：规则正文、派生数据与人物卡（本地自用）----
-# rules-text / 5echm 是抓取的规则书内容，dnd-data / card\grids 由它派生，
-# card\*.xlsx 是第三方（似雨悲灵）的人物卡。都要用，但都不随仓库分发。
+# ---- 不入公开仓库：规则正文与站点镜像（本地自用，220 MB）----
+# dnd-data\（词条库）和 card\（人物卡模板）随仓库分发，别人克隆下来就能跑；
+# rules-text\ / 5echm\ 是抓取的规则书正文与整站镜像，只有重抽数据、
+# 用离线搜索页时才需要，所以留在本地。
 /rules-text/
 /5echm/
-/card/
-/dnd-data/
-*.xlsx
 
 # ---- Dart / Flutter ----
 .pub-cache/

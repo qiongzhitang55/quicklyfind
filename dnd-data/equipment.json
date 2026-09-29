@@ -1,0 +1,5332 @@
+[
+  {
+    "id": "equipment:强酸",
+    "type": "equipment",
+    "name": "强酸",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "当你执行攻击动作时，你可以将你的一次攻击替换为丢出一小瓶强酸。你可以选择位于你20尺内可见的一个生物或物件作为目标。该目标必须通过一次敏捷豁免（DC等于8+你的敏捷调整值+你的熟练加值），否则承受2d6点强酸伤害。",
+    "fields": {
+      "价格": "25GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 2
+    }
+  },
+  {
+    "id": "equipment:炽火胶",
+    "type": "equipment",
+    "name": "炽火胶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "当你执行攻击动作时，你可以将你的一次攻击替换为丢出一扁瓶炽火胶。你可以选择位于你20尺内可见的一个生物或物件作为目标。该目标必须通过一次敏捷豁免（DC等于8+你的敏捷调整值+你的熟练加值），否则承受1d4点火焰伤害并开始燃烧（见术语汇编）。",
+    "fields": {
+      "价格": "50GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 3
+    }
+  },
+  {
+    "id": "equipment:箭矢",
+    "type": "equipment",
+    "name": "箭矢",
+    "en": "",
+    "category": "弹药",
+    "tags": [],
+    "summary": "",
+    "text": "20支",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 4
+    }
+  },
+  {
+    "id": "equipment:弩矢",
+    "type": "equipment",
+    "name": "弩矢",
+    "en": "",
+    "category": "弹药",
+    "tags": [],
+    "summary": "",
+    "text": "20支",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1.5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 5
+    }
+  },
+  {
+    "id": "equipment:枪械子弹",
+    "type": "equipment",
+    "name": "枪械子弹",
+    "en": "",
+    "category": "弹药",
+    "tags": [],
+    "summary": "",
+    "text": "10发",
+    "fields": {
+      "价格": "3GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 6
+    }
+  },
+  {
+    "id": "equipment:投石索子弹",
+    "type": "equipment",
+    "name": "投石索子弹",
+    "en": "",
+    "category": "弹药",
+    "tags": [],
+    "summary": "",
+    "text": "20发",
+    "fields": {
+      "价格": "4CP",
+      "重量": "1.5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 7
+    }
+  },
+  {
+    "id": "equipment:吹矢",
+    "type": "equipment",
+    "name": "吹矢",
+    "en": "",
+    "category": "弹药",
+    "tags": [],
+    "summary": "",
+    "text": "50支",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 8
+    }
+  },
+  {
+    "id": "equipment:抗毒剂",
+    "type": "equipment",
+    "name": "抗毒剂",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个附赠动作，你可以喝下一小瓶抗毒剂来使你在避免或结束中毒状态的豁免中具有优势，持续一小时。",
+    "fields": {
+      "价格": "50GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 9
+    }
+  },
+  {
+    "id": "equipment:水晶",
+    "type": "equipment",
+    "name": "水晶",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "奥术法器"
+    ],
+    "summary": "",
+    "text": "奥术法器是一种利用宝石或是雕刻来引导奥术魔法的物品，它会以下列奥术法器列表中的一种形式存在。术士、魔契师和法师可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 10
+    }
+  },
+  {
+    "id": "equipment:法球",
+    "type": "equipment",
+    "name": "法球",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "奥术法器"
+    ],
+    "summary": "",
+    "text": "奥术法器是一种利用宝石或是雕刻来引导奥术魔法的物品，它会以下列奥术法器列表中的一种形式存在。术士、魔契师和法师可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "20GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 11
+    }
+  },
+  {
+    "id": "equipment:权杖",
+    "type": "equipment",
+    "name": "权杖",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "奥术法器"
+    ],
+    "summary": "",
+    "text": "奥术法器是一种利用宝石或是雕刻来引导奥术魔法的物品，它会以下列奥术法器列表中的一种形式存在。术士、魔契师和法师可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 12
+    }
+  },
+  {
+    "id": "equipment:法杖（也视作长棍）",
+    "type": "equipment",
+    "name": "法杖（也视作长棍）",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "奥术法器"
+    ],
+    "summary": "",
+    "text": "奥术法器是一种利用宝石或是雕刻来引导奥术魔法的物品，它会以下列奥术法器列表中的一种形式存在。术士、魔契师和法师可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 13
+    }
+  },
+  {
+    "id": "equipment:魔杖",
+    "type": "equipment",
+    "name": "魔杖",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "奥术法器"
+    ],
+    "summary": "",
+    "text": "奥术法器是一种利用宝石或是雕刻来引导奥术魔法的物品，它会以下列奥术法器列表中的一种形式存在。术士、魔契师和法师可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 14
+    }
+  },
+  {
+    "id": "equipment:背包",
+    "type": "equipment",
+    "name": "背包",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个背包最多能装入30磅重1立方尺大的东西。背包也能当作鞍囊使用。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 15
+    }
+  },
+  {
+    "id": "equipment:滚珠",
+    "type": "equipment",
+    "name": "滚珠",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你能把一小包滚珠撒至地面，并覆盖你周围10尺内的一处10尺方形区域。任何生物每回合首次进入这片区域时都必须通过一次DC10的敏捷豁免，否则陷入倒地状态。重新收集这些滚珠需要花费10分钟时间。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 16
+    }
+  },
+  {
+    "id": "equipment:木桶",
+    "type": "equipment",
+    "name": "木桶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个木桶能够至多装入40加仑的液体或4立方尺的干燥货物。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "70"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 17
+    }
+  },
+  {
+    "id": "equipment:篮子",
+    "type": "equipment",
+    "name": "篮子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个篮子能够至多装入40磅重2立方尺大的东西。",
+    "fields": {
+      "价格": "4SP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 18
+    }
+  },
+  {
+    "id": "equipment:铺盖",
+    "type": "equipment",
+    "name": "铺盖",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一卷铺盖能睡下一个小型或中型生物。躺在铺盖中时，你自动通过抵抗极寒的豁免检定（详见地下城主指南）。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "7"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 19
+    }
+  },
+  {
+    "id": "equipment:铃铛",
+    "type": "equipment",
+    "name": "铃铛",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以摇响一个铃铛，铃铛会发出60尺内都能够听到的声音。",
+    "fields": {
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 20
+    }
+  },
+  {
+    "id": "equipment:毯子",
+    "type": "equipment",
+    "name": "毯子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "包裹在毯子中期间，你在抵抗极寒的豁免检定上具有优势（详见地下城主指南）。",
+    "fields": {
+      "价格": "5SP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 21
+    }
+  },
+  {
+    "id": "equipment:滑轮组",
+    "type": "equipment",
+    "name": "滑轮组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "滑轮组允许你提起你正常能提动的四倍重量的物品。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 22
+    }
+  },
+  {
+    "id": "equipment:书籍",
+    "type": "equipment",
+    "name": "书籍",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一本书会记载虚构或非虚构的内容。如果你在某些事物上参考了一本内容准确而非虚构的书，你在相关事物上的智力（奥秘、历史、自然或宗教）检定则获得+5的加值。",
+    "fields": {
+      "价格": "25GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 23
+    }
+  },
+  {
+    "id": "equipment:玻璃瓶",
+    "type": "equipment",
+    "name": "玻璃瓶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个玻璃瓶至多能装入1.5品脱的东西。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 24
+    }
+  },
+  {
+    "id": "equipment:吊桶",
+    "type": "equipment",
+    "name": "吊桶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个吊桶能装入至多半立方尺的东西。",
+    "fields": {
+      "价格": "5CP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 25
+    }
+  },
+  {
+    "id": "equipment:窃贼套组",
+    "type": "equipment",
+    "name": "窃贼套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "窃贼套组包含以下物品：背包、滚珠、铃铛、10根蜡烛、撬棍、附盖提灯、7扁瓶燃油、五天份的口粮、绳索、火绒盒和水袋。",
+    "fields": {
+      "价格": "16GP",
+      "重量": "42"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 26
+    }
+  },
+  {
+    "id": "equipment:铁蒺藜",
+    "type": "equipment",
+    "name": "铁蒺藜",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你能把一包铁蒺撒至地面并覆盖你周围5尺内的一处5尺方形区域。任何生物每回合首次进入这片区域时都必须通过一次DC15的敏捷豁免，否则受到1点穿刺伤害，并且移速降至0，直到其下一回合开始为止。重新收集这些铁蒺藜需要花费10分钟时间。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 27
+    }
+  },
+  {
+    "id": "equipment:蜡烛",
+    "type": "equipment",
+    "name": "蜡烛",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一根蜡烛可以燃烧1小时，并发出5尺范围的明亮光照，以及额外5尺的微光光照。",
+    "fields": {
+      "价格": "1CP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 28
+    }
+  },
+  {
+    "id": "equipment:弩矢匣",
+    "type": "equipment",
+    "name": "弩矢匣",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个弩矢匣至多能存放20根弩矢。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 29
+    }
+  },
+  {
+    "id": "equipment:地图或卷轴匣",
+    "type": "equipment",
+    "name": "地图或卷轴匣",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个地图或卷轴匣至多能存放10张纸张或5张羊皮纸。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 30
+    }
+  },
+  {
+    "id": "equipment:链条",
+    "type": "equipment",
+    "name": "链条",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以进行一次DC13的力量（运动）检定。如果该检定成功，你能利用链条捆住一个位于你5尺内的非自愿生物，但该生物必须处于受擒、失能或束缚状态。如果你绑住了该生物的腿，该生物陷入束缚状态，直至挣脱。挣脱链条需要该生物使用动作来通过一次DC18的敏捷（特技）检定。扯坏链条需要该生物使用动作来通过一次DC20的力量（运动）检定。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "10"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 31
+    }
+  },
+  {
+    "id": "equipment:箱子",
+    "type": "equipment",
+    "name": "箱子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个箱子至多能装入12立方尺的东西。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "25"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 32
+    }
+  },
+  {
+    "id": "equipment:攀爬工具",
+    "type": "equipment",
+    "name": "攀爬工具",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一套攀爬工具包含鞋子包头、手套、岩钉和系带。以一个操作动作，你可以使用攀爬工具锚定自己，此时你不会从锚定处摔落超过25尺，且在使用附赠动作解除锚定前无法从锚定处向外移动超过25尺。",
+    "fields": {
+      "价格": "25GP",
+      "重量": "12"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 33
+    }
+  },
+  {
+    "id": "equipment:高档服装",
+    "type": "equipment",
+    "name": "高档服装",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "高档服装使用昂贵的材料和装饰物制成，并缝制着极其精密的细节。有些活动和场合仅允许穿着高档服装的人参与。",
+    "fields": {
+      "价格": "15GP",
+      "重量": "6"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 34
+    }
+  },
+  {
+    "id": "equipment:旅行服装",
+    "type": "equipment",
+    "name": "旅行服装",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "旅行服装是为应对在多种环境中的旅途而设计的结实服装。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 35
+    }
+  },
+  {
+    "id": "equipment:材料包",
+    "type": "equipment",
+    "name": "材料包",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "材料包是一种装有你法术所需的一切免费材料的防水小包。",
+    "fields": {
+      "价格": "25GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 36
+    }
+  },
+  {
+    "id": "equipment:戏服",
+    "type": "equipment",
+    "name": "戏服",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "若你穿着对应的戏服，你为模仿他人或模仿某一类人所作的任何属性检定都具有优势。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 37
+    }
+  },
+  {
+    "id": "equipment:撬棍",
+    "type": "equipment",
+    "name": "撬棍",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "在能够撬动的地方使用撬棍可以给予你在这方面的力量检定优势。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 38
+    }
+  },
+  {
+    "id": "equipment:外交套组",
+    "type": "equipment",
+    "name": "外交套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "外交套组包含以下物品：箱子、高档服装、墨水、5支墨水笔、油灯、2个地图或卷轴匣、4扁瓶燃油、5张纸张、5张羊皮纸、香水和火绒盒。",
+    "fields": {
+      "价格": "39GP",
+      "重量": "39"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 39
+    }
+  },
+  {
+    "id": "equipment:槲寄生枝条",
+    "type": "equipment",
+    "name": "槲寄生枝条",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "德鲁伊法器"
+    ],
+    "summary": "",
+    "text": "德鲁伊法器是一种利用刻纹、绑带或图画来引导原初魔法的物品，它会以下列德鲁伊法器列表中的一种形式存在。德鲁伊和游侠可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 40
+    }
+  },
+  {
+    "id": "equipment:木质法杖（也视作长棍）",
+    "type": "equipment",
+    "name": "木质法杖（也视作长棍）",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "德鲁伊法器"
+    ],
+    "summary": "",
+    "text": "德鲁伊法器是一种利用刻纹、绑带或图画来引导原初魔法的物品，它会以下列德鲁伊法器列表中的一种形式存在。德鲁伊和游侠可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 41
+    }
+  },
+  {
+    "id": "equipment:紫衫魔杖",
+    "type": "equipment",
+    "name": "紫衫魔杖",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "德鲁伊法器"
+    ],
+    "summary": "",
+    "text": "德鲁伊法器是一种利用刻纹、绑带或图画来引导原初魔法的物品，它会以下列德鲁伊法器列表中的一种形式存在。德鲁伊和游侠可以使用这种物品作为法器。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 42
+    }
+  },
+  {
+    "id": "equipment:地城套组",
+    "type": "equipment",
+    "name": "地城套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "地城套组包含以下物品：背包、铁蒺藜、撬棍、2扁瓶燃油、10天份的口粮、绳索、火绒盒、10根火把和水袋。",
+    "fields": {
+      "价格": "12GP",
+      "重量": "55"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 43
+    }
+  },
+  {
+    "id": "equipment:艺人套组",
+    "type": "equipment",
+    "name": "艺人套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "艺人套组包含以下物品：背包、铺盖、铃铛、牛眼提灯、3套戏服、镜子、8扁瓶燃油、9天份的口粮、火绒盒和水袋。",
+    "fields": {
+      "价格": "40GP",
+      "重量": "58.5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 44
+    }
+  },
+  {
+    "id": "equipment:探索套组",
+    "type": "equipment",
+    "name": "探索套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "探索套组包含以下物品：背包、铺盖、2扁瓶燃油、10天份的口粮、绳索、火绒盒、10根火把和水袋。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "55"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 45
+    }
+  },
+  {
+    "id": "equipment:扁瓶",
+    "type": "equipment",
+    "name": "扁瓶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个扁瓶具有1品脱容量。",
+    "fields": {
+      "价格": "2CP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 46
+    }
+  },
+  {
+    "id": "equipment:爪钩",
+    "type": "equipment",
+    "name": "爪钩",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你能将爪钩朝着位于自身50尺内的一处栏杆、突起的边缘或是一处能够挂住的位置扔出，并进行一次DC13的敏捷（特技）检定。如果检定成功，爪钩则成功钩在上面。如果爪钩上还连了绳子，你则可以爬上去。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 47
+    }
+  },
+  {
+    "id": "equipment:医疗包",
+    "type": "equipment",
+    "name": "医疗包",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个医疗包有十次使用次数。以一个操作动作，你可以花费一次使用次数用来稳定一名生命值为0的陷入昏迷的生物的伤势。你这么做时无需进行感知（医疗）检定。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 48
+    }
+  },
+  {
+    "id": "equipment:护符（佩戴或手持）",
+    "type": "equipment",
+    "name": "护符（佩戴或手持）",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "圣徽"
+    ],
+    "summary": "",
+    "text": "圣徽是一种利用宝石或图画来引导神圣魔法的物品，它会以下列圣徽列表中的一种形式存在。牧师和圣武士可以用圣徽作为法器。\n列表还会向玩家展示不同圣徽所需要的携带方式，例如手持、佩戴或挂载到织物上（例如披挂或横幅）或盾牌上。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 49
+    }
+  },
+  {
+    "id": "equipment:纹章（挂载到织物或盾牌上）",
+    "type": "equipment",
+    "name": "纹章（挂载到织物或盾牌上）",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "圣徽"
+    ],
+    "summary": "",
+    "text": "圣徽是一种利用宝石或图画来引导神圣魔法的物品，它会以下列圣徽列表中的一种形式存在。牧师和圣武士可以用圣徽作为法器。\n列表还会向玩家展示不同圣徽所需要的携带方式，例如手持、佩戴或挂载到织物上（例如披挂或横幅）或盾牌上。",
+    "fields": {
+      "价格": "5GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 50
+    }
+  },
+  {
+    "id": "equipment:圣物匣（手持）",
+    "type": "equipment",
+    "name": "圣物匣（手持）",
+    "en": "",
+    "category": "法器",
+    "tags": [
+      "圣徽"
+    ],
+    "summary": "",
+    "text": "圣徽是一种利用宝石或图画来引导神圣魔法的物品，它会以下列圣徽列表中的一种形式存在。牧师和圣武士可以用圣徽作为法器。\n列表还会向玩家展示不同圣徽所需要的携带方式，例如手持、佩戴或挂载到织物上（例如披挂或横幅）或盾牌上。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 51
+    }
+  },
+  {
+    "id": "equipment:圣水",
+    "type": "equipment",
+    "name": "圣水",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "当你执行攻击动作时，你可以将你的一次攻击替换为丢出一扁瓶圣水。你可以选择位于你20尺内可见的一个生物作为目标。该目标必须通过一次敏捷豁免（DC等于8+你的敏捷调整值+你的熟练加值），并且如果这个目标是邪魔或亡灵生物，失败时承受2d8点光耀伤害。",
+    "fields": {
+      "价格": "25GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 52
+    }
+  },
+  {
+    "id": "equipment:捕猎陷阱",
+    "type": "equipment",
+    "name": "捕猎陷阱",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以在某处设下捕猎陷阱。捕猎陷阱是一组带有锯齿的铁环，当一个生物踩到中心的压力板时，两边的锯齿会迅速合上。这组陷阱需要用沉重的链条固定至某个无法移动的物件上——例如大树或刺入地面的固定钉。踩到压力板的生物必须通过一次DC13的敏捷豁免，否则受到1d4点穿刺伤害，并且速度降至0，直至他的下一回合开始。直到该生物挣脱陷阱前，它的移动范围会被链条的长度限制（通常为3尺）。一个生物可以使用它的动作来进行一次DC13的力量（运动）检定，检定成功时能够让自己或自己触及范围内的一个其他生物脱困。每次检定失败都会导致被困生物受到1点穿刺伤害。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "25"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 53
+    }
+  },
+  {
+    "id": "equipment:墨水",
+    "type": "equipment",
+    "name": "墨水",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "墨水一般装在1盎司的瓶子里，足够撰写500页的内容。",
+    "fields": {
+      "价格": "10GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 54
+    }
+  },
+  {
+    "id": "equipment:墨水笔",
+    "type": "equipment",
+    "name": "墨水笔",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "墨水笔可以使用墨水来写字或绘画。",
+    "fields": {
+      "价格": "2CP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 55
+    }
+  },
+  {
+    "id": "equipment:壶",
+    "type": "equipment",
+    "name": "壶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "壶具有一加仑的容量。",
+    "fields": {
+      "价格": "2CP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 56
+    }
+  },
+  {
+    "id": "equipment:梯子",
+    "type": "equipment",
+    "name": "梯子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一把梯子有10尺高。你只能在梯子上爬上或是爬下。",
+    "fields": {
+      "价格": "1SP",
+      "重量": "25"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 57
+    }
+  },
+  {
+    "id": "equipment:油灯",
+    "type": "equipment",
+    "name": "油灯",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一盏油灯使用燃油作为燃料，点着时能够发出15尺半径的明亮光照和额外30尺的微光光照。",
+    "fields": {
+      "价格": "5SP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 58
+    }
+  },
+  {
+    "id": "equipment:牛眼提灯",
+    "type": "equipment",
+    "name": "牛眼提灯",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一盏牛眼提灯使用燃油作为燃料，点着时能够发出60尺远锥形的明亮光照和额外60尺远的微光光照。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 59
+    }
+  },
+  {
+    "id": "equipment:附盖提灯",
+    "type": "equipment",
+    "name": "附盖提灯",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一盏附盖提灯使用燃油作为燃料，点着时能够发出30尺半径的明亮光照和额外30尺的微光光照。以一个附赠动作，你可以盖上或掀开提灯的盖子。盖上盖子时，提灯的光亮降至半径5尺的微光光照。",
+    "fields": {
+      "价格": "5GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 60
+    }
+  },
+  {
+    "id": "equipment:锁",
+    "type": "equipment",
+    "name": "锁",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "每套锁都有对应的钥匙。如果没有对应的钥匙，一个生物还可以使用盗贼工具来通过一次DC15的敏捷（巧手）检定开锁。",
+    "fields": {
+      "价格": "10GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 61
+    }
+  },
+  {
+    "id": "equipment:放大镜",
+    "type": "equipment",
+    "name": "放大镜",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "使用放大镜时，你为鉴定或检查精密物品所作的任何属性检定都会具有优势。想要使用放大镜点火，需要一束如同阳光般明亮的强光用于聚焦，还需要用于点燃的火绒，随后需要大约5分钟的时间来生火。",
+    "fields": {
+      "价格": "100GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 62
+    }
+  },
+  {
+    "id": "equipment:镣铐",
+    "type": "equipment",
+    "name": "镣铐",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以进行一次DC13的敏捷（巧手）检定。如果该检定成功，你能利用镣铐捆住一个位于你5尺内的非自愿的小型或中型生物，但该生物必须处于受擒、失能或束缚状态。如果你铐住了该生物，该生物进行的攻击检定会具有劣势。如果镣铐还被锁链或钩子固定在了某处，该生物还会陷入束缚状态。挣脱镣铐需要该生物使用动作来通过一次DC20的敏捷（巧手）检定。扯坏镣铐需要该生物使用动作来通过一次DC25的力量（运动）检定。\n每套镣铐都有对应的钥匙。如果没有对应的钥匙，一个生物还可以使用盗贼工具来通过一次DC15的敏捷（巧手）检定解开镣铐的锁。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "6"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 63
+    }
+  },
+  {
+    "id": "equipment:地图",
+    "type": "equipment",
+    "name": "地图",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "如果你在地图所绘制的地点参考了一张准确的地图，你为辨认位置所进行的感知（求生）检定获得+5的加值。",
+    "fields": {
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 64
+    }
+  },
+  {
+    "id": "equipment:镜子",
+    "type": "equipment",
+    "name": "镜子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一面手持的钢镜不光可以用来化妆打扮，也可以用来窥视拐角或利用反光打信号。",
+    "fields": {
+      "价格": "5GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 65
+    }
+  },
+  {
+    "id": "equipment:捕网",
+    "type": "equipment",
+    "name": "捕网",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "当你执行攻击动作，你可以将你的一次攻击替换为丢出一张捕网。你可以选择位于你15尺内可见的一个生物作为目标。该目标必须通过一次敏捷豁免（DC等于8+你的敏捷调整值+你的熟练加值），否则陷入束缚状态，直至挣脱。体型是巨型及以上的目标将自动通过豁免。\n被束缚的目标或者位于目标5尺内的生物，可以通过一个动作来进行一次DC10的力量（运动）检定来挣脱捕网。若检定成功，被束缚的生物将被解放。摧毁捕网（AC 10；5 HP；免疫钝击、毒素和心灵伤害）也能解放被困目标并结束捕网的效果。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 66
+    }
+  },
+  {
+    "id": "equipment:燃油",
+    "type": "equipment",
+    "name": "燃油",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "你能将燃油泼在一个生物、物件或一处空间上，你也可以将燃油作为燃料使用。具体使用方法如下。\n\n泼洒一个生物或一个物件Dousing a Creature or an Object。当你执行攻击动作时，你可以将你的一次攻击替换为丢出一扁瓶燃油。你可以选择位于你20尺内可见的一个生物或物件作为目标。该目标必须通过一次敏捷豁免（DC等于8+你的敏捷调整值+你的熟练加值），否则被燃油覆盖。如果目标在燃油挥发前（1分钟后）受到火焰伤害，则目标因燃烧的燃油受到额外5点火焰伤害。\n\n泼洒一处空间Dousing a Space。以一个操作动作，你可以将一扁瓶燃油泼在地面上，以覆盖一块边长5尺且保持水平的方形区域。点燃后，从点燃时算起，燃油会持续燃烧两轮并在回合结束时熄灭（或12秒）。点燃时，任何进入该区域或在该区域结束其回合的生物都会受到5点火焰伤害。同一生物每回合只受该伤害作用一次。\n燃料Fuel。燃油能作为油灯和提灯的燃料使用。一旦点着，一扁瓶的燃油可以在油灯和提灯中持续燃烧6小时。持续时长并不需要是连续的，你可以熄灭点着的燃油（以一个操作动作），并在之后再点燃，直到总共燃烧了6小时。",
+    "fields": {
+      "价格": "1SP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 67
+    }
+  },
+  {
+    "id": "equipment:纸张",
+    "type": "equipment",
+    "name": "纸张",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一页纸张能够写满250个手写单词。",
+    "fields": {
+      "价格": "2SP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 68
+    }
+  },
+  {
+    "id": "equipment:羊皮纸",
+    "type": "equipment",
+    "name": "羊皮纸",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一页羊皮纸能够写满250个手写单词。",
+    "fields": {
+      "价格": "1SP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 69
+    }
+  },
+  {
+    "id": "equipment:香水",
+    "type": "equipment",
+    "name": "香水",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "香水通常装在4盎司的小瓶里。为自己拍上香水后的一小时里，你为影响对你态度冷漠的类人生物所作的魅力（游说）检定都具有优势，但这个生物必须位于你的5尺内。",
+    "fields": {
+      "价格": "5GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 70
+    }
+  },
+  {
+    "id": "equipment:基础毒药",
+    "type": "equipment",
+    "name": "基础毒药",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个附赠动作，你可以将一小瓶基础毒药涂抹在一把武器或至多三枚弹药上。当一个生物受到由涂过毒的武器或弹药所造成的穿刺或劈砍伤害时，该生物将受到额外1d4点毒素伤害。毒药一旦被涂抹，毒效只会持续1分钟或直至造成了额外伤害。",
+    "fields": {
+      "价格": "100GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 71
+    }
+  },
+  {
+    "id": "equipment:长杆",
+    "type": "equipment",
+    "name": "长杆",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一柄长杆有10尺长。你可以用它去触碰10尺外的东西。如果你必须为一次跳高或跳远进行力量（运动）检定的话，你可以使用长杆进行撑杆跳，来使这次检定具有优势。",
+    "fields": {
+      "价格": "5CP",
+      "重量": "7"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 72
+    }
+  },
+  {
+    "id": "equipment:铁壶",
+    "type": "equipment",
+    "name": "铁壶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "铁壶具有一加仑的容量。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "10"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 73
+    }
+  },
+  {
+    "id": "equipment:治疗药水",
+    "type": "equipment",
+    "name": "治疗药水",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "这瓶药水是一种魔法物品。以一个附赠动作，你可以喝掉它或将它喂给位于你5尺内的其他生物。喝掉这小瓶魔法红色液体的生物能够恢复2d4+2点生命值。",
+    "fields": {
+      "价格": "50GP",
+      "重量": "0.5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 74
+    }
+  },
+  {
+    "id": "equipment:小包",
+    "type": "equipment",
+    "name": "小包",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个小包能够至多装入6磅重、五分之一立方尺大的东西。",
+    "fields": {
+      "价格": "5SP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 75
+    }
+  },
+  {
+    "id": "equipment:祭司套组",
+    "type": "equipment",
+    "name": "祭司套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "祭司套组包含以下物品：背包、毯子、圣水、油灯、7天份的口粮、长袍和火绒盒。",
+    "fields": {
+      "价格": "33GP",
+      "重量": "29"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 76
+    }
+  },
+  {
+    "id": "equipment:箭袋",
+    "type": "equipment",
+    "name": "箭袋",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "箭袋至多能装入20根箭矢。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 77
+    }
+  },
+  {
+    "id": "equipment:便携式攻城锤",
+    "type": "equipment",
+    "name": "便携式攻城锤",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "你可以使用便携式攻城锤撞破一扇门。当你这么做时，你在力量检定上获得+4加值。其他一名角色可以协助你使用攻城锤，并使你这次检定具有优势。",
+    "fields": {
+      "价格": "4GP",
+      "重量": "35"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 78
+    }
+  },
+  {
+    "id": "equipment:口粮",
+    "type": "equipment",
+    "name": "口粮",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "口粮由适合长途旅行携带的食物组成，包含肉干、风干水果、饼干和坚果等。不进食的危害详见术语汇编中的“饥饿”部分。",
+    "fields": {
+      "价格": "5SP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 79
+    }
+  },
+  {
+    "id": "equipment:长袍",
+    "type": "equipment",
+    "name": "长袍",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "长袍通常具有特别的的职业或仪式意义。有些活动和场合仅允许穿着带有特定颜色或符号的长袍的人参与。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "4"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 80
+    }
+  },
+  {
+    "id": "equipment:绳索",
+    "type": "equipment",
+    "name": "绳索",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以进行一次DC10的敏捷（巧手）检定。如果该检定成功，你能用绳索打一个结。扯坏绳索需要成功通过一次DC20的力量（运动）检定。\n你可以利用绳索捆住一个非自愿生物，但该生物必须处于受擒、失能或束缚状态。如果你绑住了该生物的腿，该生物陷入束缚状态，直至挣脱。挣脱绳索需要该生物使用动作来通过一次DC15的敏捷（特技）检定。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 81
+    }
+  },
+  {
+    "id": "equipment:麻袋",
+    "type": "equipment",
+    "name": "麻袋",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "麻袋至多能够装入30磅1立方尺的东西。",
+    "fields": {
+      "价格": "1CP",
+      "重量": "0.5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 82
+    }
+  },
+  {
+    "id": "equipment:学者套组",
+    "type": "equipment",
+    "name": "学者套组",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "学者套组包含以下物品：背包、书、墨水、墨水笔、油灯、10扁瓶燃油、10张羊皮纸和火绒盒。",
+    "fields": {
+      "价格": "40GP",
+      "重量": "22"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 83
+    }
+  },
+  {
+    "id": "equipment:铲子",
+    "type": "equipment",
+    "name": "铲子",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "你可以使用铲子来花费一小时时间在土壤或类似材质的地方挖出一个5尺边长的洞。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 84
+    }
+  },
+  {
+    "id": "equipment:信号笛",
+    "type": "equipment",
+    "name": "信号笛",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "以一个操作动作，你可以吹响一支信号笛，并使信号笛发出600尺外都可以听见的响声。",
+    "fields": {
+      "价格": "5CP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 85
+    }
+  },
+  {
+    "id": "equipment:戏法卷轴",
+    "type": "equipment",
+    "name": "戏法卷轴",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一个戏法法术卷轴或一环法术卷轴是一种记载了戏法或一环法术的魔法物品。具体是哪一种由卷轴的创造者决定。如果卷轴的法术处在你的职业法术列表中，你就可以阅读这卷卷轴并在无需材料成分的情况下，使用法术的正常施法时间来施展这道法术。",
+    "fields": {
+      "价格": "30GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 86
+    }
+  },
+  {
+    "id": "equipment:一环卷轴",
+    "type": "equipment",
+    "name": "一环卷轴",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "如果法术要求豁免检定或攻击检定，法术的豁免DC则为13，而攻击加值为5。当法术施展完毕，卷轴会立刻烟消云散。",
+    "fields": {
+      "价格": "50GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 87
+    }
+  },
+  {
+    "id": "equipment:铁钉",
+    "type": "equipment",
+    "name": "铁钉",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "一组铁钉具有十支。以一个操作动作，你可以使用一把钝器，例如轻锤，来将铁钉锤入木头、土地或类似的材质。你能通过这种方式堵死一扇门，或将绳索或链条固定在铁钉上。",
+    "fields": {
+      "价格": "1GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 88
+    }
+  },
+  {
+    "id": "equipment:望远镜",
+    "type": "equipment",
+    "name": "望远镜",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "通过望远镜看到的物件要比原先的尺寸大上两倍。",
+    "fields": {
+      "价格": "1000GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 89
+    }
+  },
+  {
+    "id": "equipment:细线",
+    "type": "equipment",
+    "name": "细线",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "细绳有10尺长。你能够以一个操作动作为它打一个结。",
+    "fields": {
+      "价格": "1SP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 90
+    }
+  },
+  {
+    "id": "equipment:帐篷",
+    "type": "equipment",
+    "name": "帐篷",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "帐篷可以睡下两个小型或中型的生物。",
+    "fields": {
+      "价格": "2GP",
+      "重量": "20"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 91
+    }
+  },
+  {
+    "id": "equipment:火绒盒",
+    "type": "equipment",
+    "name": "火绒盒",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "火绒盒是一种装有打火石、火镰和火绒（通常是浸泡在燃油里的干布料）的小型容器，其中的物品可以用来点火。你可以使用附赠动作来用它点燃任何具有燃料的东西——例如蜡烛、油灯、提灯或火把。在没有燃料的情况下生火需要1分钟时间。",
+    "fields": {
+      "价格": "5SP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 92
+    }
+  },
+  {
+    "id": "equipment:火把",
+    "type": "equipment",
+    "name": "火把",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "火把点燃后能够燃烧1小时，燃烧期间发出20尺半径的明亮光照和额外20尺的微光光照。当你执行攻击动作时，你可以将火把当作简易近战武器，并使用火把发动攻击。命中时，目标受到1点火焰伤害。",
+    "fields": {
+      "价格": "1CP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 93
+    }
+  },
+  {
+    "id": "equipment:小瓶",
+    "type": "equipment",
+    "name": "小瓶",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "小瓶具有4盎司容量。",
+    "fields": {
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 94
+    }
+  },
+  {
+    "id": "equipment:水袋",
+    "type": "equipment",
+    "name": "水袋",
+    "en": "",
+    "category": "冒险用品",
+    "tags": [],
+    "summary": "",
+    "text": "水袋具有4品脱容量。如果你喝水不足，你会遭受脱水的危害（见规则详述）。",
+    "fields": {
+      "价格": "2SP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 95
+    }
+  },
+  {
+    "id": "equipment:炼金工具",
+    "type": "equipment",
+    "name": "炼金工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "辨析一种物质（DC15），或生起一场火（DC15）",
+    "fields": {
+      "属性": "智力",
+      "操作": "辨析一种物质（DC15），或生起一场火（DC15）",
+      "制造": "强酸、炽火胶、材料包、燃油、纸张、香水",
+      "价格": "50GP",
+      "重量": "8"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 2
+    }
+  },
+  {
+    "id": "equipment:酿酒工具",
+    "type": "equipment",
+    "name": "酿酒工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "检测饮品是否下毒（DC15），或辨识酒精（DC10）",
+    "fields": {
+      "属性": "智力",
+      "操作": "检测饮品是否下毒（DC15），或辨识酒精（DC10）",
+      "制造": "抗毒剂",
+      "价格": "20GP",
+      "重量": "9"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 3
+    }
+  },
+  {
+    "id": "equipment:书法工具",
+    "type": "equipment",
+    "name": "书法工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "以华丽的字迹撰写文字防止造假（DC15）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "以华丽的字迹撰写文字防止造假（DC15）",
+      "制造": "墨水、法术卷轴",
+      "价格": "10GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 4
+    }
+  },
+  {
+    "id": "equipment:木匠工具",
+    "type": "equipment",
+    "name": "木匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "封死或撬开一扇门或一个容器（DC20）",
+    "fields": {
+      "属性": "力量",
+      "操作": "封死或撬开一扇门或一个容器（DC20）",
+      "制造": "短棒、巨棒、长棍、木桶、箱子、梯子、长杆、便携式攻城锤、火把",
+      "价格": "8GP",
+      "重量": "6"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 5
+    }
+  },
+  {
+    "id": "equipment:制图工具",
+    "type": "equipment",
+    "name": "制图工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "为一小片区域绘制地图（DC15）",
+    "fields": {
+      "属性": "感知",
+      "操作": "为一小片区域绘制地图（DC15）",
+      "制造": "地图",
+      "价格": "15GP",
+      "重量": "6"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 6
+    }
+  },
+  {
+    "id": "equipment:鞋匠工具",
+    "type": "equipment",
+    "name": "鞋匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "改造足具来为穿戴者的下一次敏捷（特技）检定提供优势（DC10）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "改造足具来为穿戴者的下一次敏捷（特技）检定提供优势（DC10）",
+      "制造": "攀爬工具",
+      "价格": "5GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 7
+    }
+  },
+  {
+    "id": "equipment:厨师工具",
+    "type": "equipment",
+    "name": "厨师工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "改善食物风味（DC10），检查食物是否腐坏或有毒（DC15）",
+    "fields": {
+      "属性": "感知",
+      "操作": "改善食物风味（DC10），检查食物是否腐坏或有毒（DC15）",
+      "制造": "口粮",
+      "价格": "1GP",
+      "重量": "8"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 8
+    }
+  },
+  {
+    "id": "equipment:玻璃匠工具",
+    "type": "equipment",
+    "name": "玻璃匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断一个玻璃物件在过去24小时内盛过什么内容物（DC15）",
+    "fields": {
+      "属性": "智力",
+      "操作": "判断一个玻璃物件在过去24小时内盛过什么内容物（DC15）",
+      "制造": "玻璃瓶、放大镜、望远镜、小瓶",
+      "价格": "30GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 9
+    }
+  },
+  {
+    "id": "equipment:珠宝匠工具",
+    "type": "equipment",
+    "name": "珠宝匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断珠宝价值（DC15）",
+    "fields": {
+      "属性": "智力",
+      "操作": "判断珠宝价值（DC15）",
+      "制造": "奥术法器、圣徽",
+      "价格": "25GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 10
+    }
+  },
+  {
+    "id": "equipment:皮匠工具",
+    "type": "equipment",
+    "name": "皮匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "对一个皮制品进行图案设计（DC10）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "对一个皮制品进行图案设计（DC10）",
+      "制造": "投石索、鞭子、兽皮甲、皮甲、镶钉皮甲、背包、弩矢匣、地图或卷轴匣、羊皮纸、小包、箭袋、水袋",
+      "价格": "5GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 11
+    }
+  },
+  {
+    "id": "equipment:石匠工具",
+    "type": "equipment",
+    "name": "石匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "在石头上凿出一个符号标志或一个洞（DC10）",
+    "fields": {
+      "属性": "力量",
+      "操作": "在石头上凿出一个符号标志或一个洞（DC10）",
+      "制造": "滑轮组",
+      "价格": "10GP",
+      "重量": "8"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 12
+    }
+  },
+  {
+    "id": "equipment:画家工具",
+    "type": "equipment",
+    "name": "画家工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "画出你所见过的某个事物的可辨图像（DC10）",
+    "fields": {
+      "属性": "感知",
+      "操作": "画出你所见过的某个事物的可辨图像（DC10）",
+      "制造": "德鲁伊法器、圣徽",
+      "价格": "10GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 13
+    }
+  },
+  {
+    "id": "equipment:陶匠工具",
+    "type": "equipment",
+    "name": "陶匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断一个陶瓷物件在过去24小时内盛过什么内容物（DC15）",
+    "fields": {
+      "属性": "智力",
+      "操作": "判断一个陶瓷物件在过去24小时内盛过什么内容物（DC15）",
+      "制造": "壶、灯",
+      "价格": "10GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 14
+    }
+  },
+  {
+    "id": "equipment:铁匠工具",
+    "type": "equipment",
+    "name": "铁匠工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "撬开一扇门或容器（DC20）",
+    "fields": {
+      "属性": "力量",
+      "操作": "撬开一扇门或容器（DC20）",
+      "制造": "任意近战武器（除了短棒，巨棒，长棍和鞭子）、中甲（除了兽皮甲）、重甲、滚珠、吊桶、铁蒺藜、链条、撬棍、枪械子弹、爪钩、铁壶、铁钉、投石索子弹",
+      "价格": "20GP",
+      "重量": "8"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 15
+    }
+  },
+  {
+    "id": "equipment:修补工具",
+    "type": "equipment",
+    "name": "修补工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "将过去一分钟内碎成数块的微型物件集齐并修好（DC20）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "将过去一分钟内碎成数块的微型物件集齐并修好（DC20）",
+      "制造": "火铳、手铳、铃铛、牛眼提灯、扁瓶、附盖提灯、捕猎陷阱、锁、镣铐、镜子、铲子、信号笛、火绒盒",
+      "价格": "50GP",
+      "重量": "10"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 16
+    }
+  },
+  {
+    "id": "equipment:织布工具",
+    "type": "equipment",
+    "name": "织布工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "修补衣服上的破口（DC10），或是缝制一个微型图案（DC10）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "修补衣服上的破口（DC10），或是缝制一个微型图案（DC10）",
+      "制造": "布甲、篮子、铺盖、毯子、高档服装、捕网、长袍、绳索、麻袋、细绳、帐篷、旅行服装",
+      "价格": "1GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 17
+    }
+  },
+  {
+    "id": "equipment:木雕工具",
+    "type": "equipment",
+    "name": "木雕工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "在木头上雕刻图案（DC10）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "在木头上雕刻图案（DC10）",
+      "制造": "短棒、巨棒、长棍、远程武器（除了手铳、火铳和投石索）、奥术法器、弩矢、德鲁伊法器、墨水笔、吹矢",
+      "价格": "1GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 18
+    }
+  },
+  {
+    "id": "equipment:易容工具",
+    "type": "equipment",
+    "name": "易容工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "化妆（DC10）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "化妆（DC10）",
+      "制造": "戏服",
+      "价格": "25GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 19
+    }
+  },
+  {
+    "id": "equipment:文书伪造工具",
+    "type": "equipment",
+    "name": "文书伪造工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "模仿其他人的笔迹，至多10个单词（DC15），或伪造一份火漆（DC20）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "模仿其他人的笔迹，至多10个单词（DC15），或伪造一份火漆（DC20）",
+      "价格": "15GP",
+      "重量": "5"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 20
+    }
+  },
+  {
+    "id": "equipment:赌具（多种）",
+    "type": "equipment",
+    "name": "赌具（多种）",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断某人是否作弊（DC10），或赢取游戏（DC20）",
+    "fields": {
+      "属性": "感知",
+      "操作": "判断某人是否作弊（DC10），或赢取游戏（DC20）"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 21
+    }
+  },
+  {
+    "id": "equipment:骰子",
+    "type": "equipment",
+    "name": "骰子",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断某人是否作弊（DC10），或赢取游戏（DC21）",
+    "fields": {
+      "属性": "感知",
+      "操作": "判断某人是否作弊（DC10），或赢取游戏（DC21）",
+      "价格": "1SP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 22
+    }
+  },
+  {
+    "id": "equipment:龙棋",
+    "type": "equipment",
+    "name": "龙棋",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断某人是否作弊（DC10），或赢取游戏（DC22）",
+    "fields": {
+      "属性": "感知",
+      "操作": "判断某人是否作弊（DC10），或赢取游戏（DC22）",
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 23
+    }
+  },
+  {
+    "id": "equipment:纸牌",
+    "type": "equipment",
+    "name": "纸牌",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断某人是否作弊（DC10），或赢取游戏（DC23）",
+    "fields": {
+      "属性": "感知",
+      "操作": "判断某人是否作弊（DC10），或赢取游戏（DC23）",
+      "价格": "5SP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 24
+    }
+  },
+  {
+    "id": "equipment:三龙牌",
+    "type": "equipment",
+    "name": "三龙牌",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "判断某人是否作弊（DC10），或赢取游戏（DC24）",
+    "fields": {
+      "属性": "感知",
+      "操作": "判断某人是否作弊（DC10），或赢取游戏（DC24）",
+      "价格": "1GP"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 25
+    }
+  },
+  {
+    "id": "equipment:草药工具",
+    "type": "equipment",
+    "name": "草药工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "辨认植物（DC10）",
+    "fields": {
+      "属性": "智力",
+      "操作": "辨认植物（DC10）",
+      "制造": "抗毒剂、蜡烛、医疗包、治疗药水",
+      "价格": "5GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 26
+    }
+  },
+  {
+    "id": "equipment:乐器（多类）",
+    "type": "equipment",
+    "name": "乐器（多类）",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC15）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC15）"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 27
+    }
+  },
+  {
+    "id": "equipment:风笛",
+    "type": "equipment",
+    "name": "风笛",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC16）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC16）",
+      "价格": "30GP",
+      "重量": "6"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 28
+    }
+  },
+  {
+    "id": "equipment:鼓",
+    "type": "equipment",
+    "name": "鼓",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC17）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC17）",
+      "价格": "6GP",
+      "重量": "3"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 29
+    }
+  },
+  {
+    "id": "equipment:扬琴",
+    "type": "equipment",
+    "name": "扬琴",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC18）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC18）",
+      "价格": "25GP",
+      "重量": "10"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 30
+    }
+  },
+  {
+    "id": "equipment:长笛",
+    "type": "equipment",
+    "name": "长笛",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC19）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC19）",
+      "价格": "2GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 31
+    }
+  },
+  {
+    "id": "equipment:号角",
+    "type": "equipment",
+    "name": "号角",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC20）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC20）",
+      "价格": "3GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 32
+    }
+  },
+  {
+    "id": "equipment:鲁特琴",
+    "type": "equipment",
+    "name": "鲁特琴",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC21）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC21）",
+      "价格": "35GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 33
+    }
+  },
+  {
+    "id": "equipment:里拉琴",
+    "type": "equipment",
+    "name": "里拉琴",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC22）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC22）",
+      "价格": "30GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 34
+    }
+  },
+  {
+    "id": "equipment:排箫",
+    "type": "equipment",
+    "name": "排箫",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC23）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC23）",
+      "价格": "12GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 35
+    }
+  },
+  {
+    "id": "equipment:芦笛",
+    "type": "equipment",
+    "name": "芦笛",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC24）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC24）",
+      "价格": "2GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 36
+    }
+  },
+  {
+    "id": "equipment:提琴",
+    "type": "equipment",
+    "name": "提琴",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC25）",
+    "fields": {
+      "属性": "魅力",
+      "操作": "演奏一个熟知的曲调（DC10），或是演奏一首即兴的乐曲（DC25）",
+      "价格": "30GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 37
+    }
+  },
+  {
+    "id": "equipment:领航工具",
+    "type": "equipment",
+    "name": "领航工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "计划路线（DC10），或通过观星判断位置（DC15）",
+    "fields": {
+      "属性": "感知",
+      "操作": "计划路线（DC10），或通过观星判断位置（DC15）",
+      "价格": "25GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 38
+    }
+  },
+  {
+    "id": "equipment:毒药工具",
+    "type": "equipment",
+    "name": "毒药工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "侦测有毒物件（DC10）",
+    "fields": {
+      "属性": "智力",
+      "操作": "侦测有毒物件（DC10）",
+      "制造": "基础毒药",
+      "价格": "50GP",
+      "重量": "2"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 39
+    }
+  },
+  {
+    "id": "equipment:盗贼工具",
+    "type": "equipment",
+    "name": "盗贼工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "撬锁（DC15），或解除陷阱（DC15）",
+    "fields": {
+      "属性": "敏捷",
+      "操作": "撬锁（DC15），或解除陷阱（DC15）",
+      "价格": "25GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 40
+    }
+  },
+  {
+    "id": "equipment:指纹采集工具",
+    "type": "equipment",
+    "name": "指纹采集工具",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "这套工具能让你采集物件上留下的指纹细节，并将其与另一生物的指纹进行比对。它包括一个印台、羊皮纸以及滑石粉。",
+    "fields": {
+      "属性": "智力",
+      "操作": "这套工具能让你采集物件上留下的指纹细节，并将其与另一生物的指纹进行比对。它包括一个印台、羊皮纸以及滑石粉。",
+      "制造": "显现物件上留下的指纹并描摹其副本（DC20），或将描摹的指纹副本与一个类人生物的指纹进行比对（DC15）。",
+      "价格": "25GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 41
+    }
+  },
+  {
+    "id": "equipment:通灵板",
+    "type": "equipment",
+    "name": "通灵板",
+    "en": "",
+    "category": "工具",
+    "tags": [],
+    "summary": "",
+    "text": "通灵板是一块写满字母的木板，通常是通用语字母，但也有适用于不同文字的版本。你可以用它来联络以太位面生物，与之进行有限的交流。",
+    "fields": {
+      "属性": "魅力",
+      "操作": "通灵板是一块写满字母的木板，通常是通用语字母，但也有适用于不同文字的版本。你可以用它来联络以太位面生物，与之进行有限的交流。",
+      "制造": "与30尺内的一个以太位面生物交换最多10个单词的信息（DC15）。",
+      "价格": "15GP",
+      "重量": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 42
+    }
+  },
+  {
+    "id": "equipment:法师护甲",
+    "type": "equipment",
+    "name": "法师护甲",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 22
+    }
+  },
+  {
+    "id": "equipment:大法师法袍",
+    "type": "equipment",
+    "name": "大法师法袍",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "15",
+      "敏捷加值": "1"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 23
+    }
+  },
+  {
+    "id": "equipment:武僧",
+    "type": "equipment",
+    "name": "武僧",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "10+感知调整值+敏捷调整值",
+    "fields": {
+      "护甲等级": "12",
+      "敏捷加值": "1",
+      "属性": "10+感知调整值+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 24
+    }
+  },
+  {
+    "id": "equipment:野蛮人",
+    "type": "equipment",
+    "name": "野蛮人",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "10+体质调整值+敏捷调整值",
+    "fields": {
+      "护甲等级": "11",
+      "敏捷加值": "1",
+      "属性": "10+体质调整值+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 25
+    }
+  },
+  {
+    "id": "equipment:龙术",
+    "type": "equipment",
+    "name": "龙术",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "10+魅力调整值+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "10+魅力调整值+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 26
+    }
+  },
+  {
+    "id": "equipment:舞蹈诗",
+    "type": "equipment",
+    "name": "舞蹈诗",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "10+魅力调整值+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "10+魅力调整值+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 27
+    }
+  },
+  {
+    "id": "equipment:巨灵流光",
+    "type": "equipment",
+    "name": "巨灵流光",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "10+魅力调整值+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "10+魅力调整值+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 28
+    }
+  },
+  {
+    "id": "equipment:象族",
+    "type": "equipment",
+    "name": "象族",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "12+体质调整值",
+    "fields": {
+      "护甲等级": "12",
+      "敏捷加值": "1",
+      "属性": "12+体质调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 29
+    }
+  },
+  {
+    "id": "equipment:蜥蜴人",
+    "type": "equipment",
+    "name": "蜥蜴人",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "13+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "13+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 30
+    }
+  },
+  {
+    "id": "equipment:龟人",
+    "type": "equipment",
+    "name": "龟人",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "17",
+      "敏捷加值": "0"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 31
+    }
+  },
+  {
+    "id": "equipment:螳螂人",
+    "type": "equipment",
+    "name": "螳螂人",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "13+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "13+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 32
+    }
+  },
+  {
+    "id": "equipment:自动侏儒",
+    "type": "equipment",
+    "name": "自动侏儒",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "13+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "13+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 33
+    }
+  },
+  {
+    "id": "equipment:猬族",
+    "type": "equipment",
+    "name": "猬族",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "14+敏捷调整值",
+    "fields": {
+      "护甲等级": "14",
+      "敏捷加值": "1",
+      "属性": "14+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 34
+    }
+  },
+  {
+    "id": "equipment:熊民",
+    "type": "equipment",
+    "name": "熊民",
+    "en": "",
+    "category": "其它",
+    "tags": [
+      "AC来源"
+    ],
+    "summary": "",
+    "text": "13+敏捷调整值",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "属性": "13+敏捷调整值"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 35
+    }
+  },
+  {
+    "id": "equipment:布甲",
+    "type": "equipment",
+    "name": "布甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "轻甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势",
+    "fields": {
+      "护甲等级": "11",
+      "敏捷加值": "1",
+      "重量": "8",
+      "属性": "隐匿劣势",
+      "类型": "轻甲",
+      "隐匿劣势": "劣势"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 37
+    }
+  },
+  {
+    "id": "equipment:皮甲",
+    "type": "equipment",
+    "name": "皮甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "轻甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "11",
+      "敏捷加值": "1",
+      "重量": "10",
+      "类型": "轻甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 38
+    }
+  },
+  {
+    "id": "equipment:镶钉皮甲",
+    "type": "equipment",
+    "name": "镶钉皮甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "轻甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "12",
+      "敏捷加值": "1",
+      "重量": "13",
+      "类型": "轻甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 39
+    }
+  },
+  {
+    "id": "equipment:树皮甲",
+    "type": "equipment",
+    "name": "树皮甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "轻甲"
+    ],
+    "summary": "",
+    "text": "当你穿着树皮甲时，你在林地中进行隐匿检定时具有优势。",
+    "fields": {
+      "护甲等级": "11",
+      "敏捷加值": "1",
+      "重量": "14",
+      "属性": "当你穿着树皮甲时，你在林地中进行隐匿检定时具有优势。",
+      "类型": "轻甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 40
+    }
+  },
+  {
+    "id": "equipment:兽皮甲",
+    "type": "equipment",
+    "name": "兽皮甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "12",
+      "敏捷加值": "1",
+      "重量": "12",
+      "类型": "中甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 42
+    }
+  },
+  {
+    "id": "equipment:链甲衫",
+    "type": "equipment",
+    "name": "链甲衫",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "13",
+      "敏捷加值": "1",
+      "重量": "20",
+      "类型": "中甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 43
+    }
+  },
+  {
+    "id": "equipment:鳞甲",
+    "type": "equipment",
+    "name": "鳞甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势",
+    "fields": {
+      "护甲等级": "14",
+      "敏捷加值": "1",
+      "重量": "45",
+      "属性": "隐匿劣势",
+      "类型": "中甲",
+      "隐匿劣势": "劣势"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 44
+    }
+  },
+  {
+    "id": "equipment:胸甲",
+    "type": "equipment",
+    "name": "胸甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "14",
+      "敏捷加值": "1",
+      "重量": "20",
+      "类型": "中甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 45
+    }
+  },
+  {
+    "id": "equipment:半身板甲",
+    "type": "equipment",
+    "name": "半身板甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势",
+    "fields": {
+      "护甲等级": "15",
+      "敏捷加值": "1",
+      "重量": "40",
+      "属性": "隐匿劣势",
+      "类型": "中甲",
+      "隐匿劣势": "劣势"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 46
+    }
+  },
+  {
+    "id": "equipment:海藻甲",
+    "type": "equipment",
+    "name": "海藻甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "中甲"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "护甲等级": "15",
+      "敏捷加值": "1",
+      "重量": "22",
+      "类型": "中甲"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 47
+    }
+  },
+  {
+    "id": "equipment:环甲",
+    "type": "equipment",
+    "name": "环甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "重甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势",
+    "fields": {
+      "护甲等级": "14",
+      "敏捷加值": "0",
+      "重量": "40",
+      "属性": "隐匿劣势",
+      "类型": "重甲",
+      "隐匿劣势": "劣势"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 49
+    }
+  },
+  {
+    "id": "equipment:链甲",
+    "type": "equipment",
+    "name": "链甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "重甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势，力量需求13",
+    "fields": {
+      "护甲等级": "16",
+      "敏捷加值": "0",
+      "重量": "55",
+      "属性": "隐匿劣势，力量需求13",
+      "类型": "重甲",
+      "隐匿劣势": "劣势",
+      "力量需求": "13"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 50
+    }
+  },
+  {
+    "id": "equipment:板条甲",
+    "type": "equipment",
+    "name": "板条甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "重甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势，力量需求15",
+    "fields": {
+      "护甲等级": "17",
+      "敏捷加值": "0",
+      "重量": "60",
+      "属性": "隐匿劣势，力量需求15",
+      "类型": "重甲",
+      "隐匿劣势": "劣势",
+      "力量需求": "15"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 51
+    }
+  },
+  {
+    "id": "equipment:潜水甲",
+    "type": "equipment",
+    "name": "潜水甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "重甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势，当你穿着潜水甲时，除非你的力量达到或超过18，否则你的移动速度降低10尺。此外，当你穿着潜水甲时，若有人对你施放法术水下呼吸Water Breathing ，该法术对你的持续时间翻倍。",
+    "fields": {
+      "护甲等级": "17",
+      "敏捷加值": "0",
+      "重量": "100",
+      "属性": "隐匿劣势，当你穿着潜水甲时，除非你的力量达到或超过18，否则你的移动速度降低10尺。此外，当你穿着潜水甲时，若有人对你施放法术水下呼吸Water Breathing ，该法术对你的持续时间翻倍。",
+      "类型": "重甲",
+      "隐匿劣势": "劣势"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 52
+    }
+  },
+  {
+    "id": "equipment:板甲",
+    "type": "equipment",
+    "name": "板甲",
+    "en": "",
+    "category": "护甲",
+    "tags": [
+      "重甲"
+    ],
+    "summary": "",
+    "text": "隐匿劣势，力量需求15",
+    "fields": {
+      "护甲等级": "18",
+      "敏捷加值": "0",
+      "重量": "65",
+      "属性": "隐匿劣势，力量需求15",
+      "类型": "重甲",
+      "隐匿劣势": "劣势",
+      "力量需求": "15"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 53
+    }
+  },
+  {
+    "id": "equipment:徒手打击",
+    "type": "equipment",
+    "name": "徒手打击",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1",
+      "伤害类型": "钝击",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 3
+    }
+  },
+  {
+    "id": "equipment:短棒",
+    "type": "equipment",
+    "name": "短棒",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "钝击",
+      "属性": "轻型",
+      "精通": "缓速",
+      "重量": "2",
+      "价格": "1 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 4
+    }
+  },
+  {
+    "id": "equipment:匕首",
+    "type": "equipment",
+    "name": "匕首",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "穿刺",
+      "属性": "灵巧，轻型，投掷（射程 20/60）",
+      "精通": "迅击",
+      "重量": "1",
+      "价格": "2 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 5
+    }
+  },
+  {
+    "id": "equipment:巨棒",
+    "type": "equipment",
+    "name": "巨棒",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d8",
+      "伤害类型": "钝击",
+      "属性": "双手",
+      "精通": "推离",
+      "重量": "10",
+      "价格": "2 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 6
+    }
+  },
+  {
+    "id": "equipment:手斧",
+    "type": "equipment",
+    "name": "手斧",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "挥砍",
+      "属性": "轻型，投掷（射程 20/60）",
+      "精通": "侵扰",
+      "重量": "2",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 7
+    }
+  },
+  {
+    "id": "equipment:标枪",
+    "type": "equipment",
+    "name": "标枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "穿刺",
+      "属性": "投掷（射程 30/120）",
+      "精通": "缓速",
+      "重量": "2",
+      "价格": "5 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 8
+    }
+  },
+  {
+    "id": "equipment:轻锤",
+    "type": "equipment",
+    "name": "轻锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "钝击",
+      "属性": "轻型，投掷（射程 20/60）",
+      "精通": "迅击",
+      "重量": "2",
+      "价格": "2 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 9
+    }
+  },
+  {
+    "id": "equipment:硬头锤",
+    "type": "equipment",
+    "name": "硬头锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "精通": "削弱",
+      "重量": "4",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 10
+    }
+  },
+  {
+    "id": "equipment:长棍",
+    "type": "equipment",
+    "name": "长棍",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "多用（1d8）",
+      "精通": "失衡",
+      "重量": "4",
+      "价格": "2 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 11
+    }
+  },
+  {
+    "id": "equipment:镰刀",
+    "type": "equipment",
+    "name": "镰刀",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "挥砍",
+      "属性": "轻型",
+      "精通": "迅击",
+      "重量": "2",
+      "价格": "1 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 12
+    }
+  },
+  {
+    "id": "equipment:矛",
+    "type": "equipment",
+    "name": "矛",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "穿刺",
+      "属性": "投掷（射程 20/60），多用（1d8）",
+      "精通": "削弱",
+      "重量": "3",
+      "价格": "1 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 13
+    }
+  },
+  {
+    "id": "equipment:船桨",
+    "type": "equipment",
+    "name": "船桨",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d10",
+      "伤害类型": "钝击",
+      "属性": "双手",
+      "重量": "8",
+      "价格": "8 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 14
+    }
+  },
+  {
+    "id": "equipment:回旋镖",
+    "type": "equipment",
+    "name": "回旋镖",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，投掷（60/180尺），特殊",
+      "重量": "1",
+      "价格": "2 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 15
+    }
+  },
+  {
+    "id": "equipment:蝴蝶杖",
+    "type": "equipment",
+    "name": "蝴蝶杖",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "钝击",
+      "属性": "灵巧，多用（1d6），特殊",
+      "重量": "1",
+      "价格": "4 CP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 16
+    }
+  },
+  {
+    "id": "equipment:扇",
+    "type": "equipment",
+    "name": "扇",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，轻型，特殊",
+      "重量": "0.25",
+      "价格": "2 CP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 17
+    }
+  },
+  {
+    "id": "equipment:煎锅",
+    "type": "equipment",
+    "name": "煎锅",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "多用（1d8），特殊",
+      "重量": "6",
+      "价格": "3 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 18
+    }
+  },
+  {
+    "id": "equipment:铁茶壶",
+    "type": "equipment",
+    "name": "铁茶壶",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "2d4",
+      "伤害类型": "钝击",
+      "重量": "2",
+      "价格": "1 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 19
+    }
+  },
+  {
+    "id": "equipment:铲子#2",
+    "type": "equipment",
+    "name": "铲子",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击/挥砍",
+      "属性": "多用（1d8）",
+      "重量": "4",
+      "价格": "3 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 20
+    }
+  },
+  {
+    "id": "equipment:雨伞",
+    "type": "equipment",
+    "name": "雨伞",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易近战武器",
+      "伤害": "1d4",
+      "伤害类型": "钝击",
+      "属性": "灵巧，特殊",
+      "重量": "2",
+      "价格": "5 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 21
+    }
+  },
+  {
+    "id": "equipment:飞镖",
+    "type": "equipment",
+    "name": "飞镖",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "1d4",
+      "伤害类型": "穿刺",
+      "属性": "灵巧，投掷（射程 20/60）",
+      "精通": "侵扰",
+      "重量": "0.25",
+      "价格": "5 CP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 22
+    }
+  },
+  {
+    "id": "equipment:轻弩",
+    "type": "equipment",
+    "name": "轻弩",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 80/320；弩矢），装填，双手",
+      "精通": "缓速",
+      "重量": "5",
+      "价格": "25 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 23
+    }
+  },
+  {
+    "id": "equipment:短弓",
+    "type": "equipment",
+    "name": "短弓",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "1d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 80/320；箭矢），双手",
+      "精通": "侵扰",
+      "重量": "2",
+      "价格": "25 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 24
+    }
+  },
+  {
+    "id": "equipment:投石索",
+    "type": "equipment",
+    "name": "投石索",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "1d4",
+      "伤害类型": "钝击",
+      "属性": "弹药（射程 30/120；子弹）",
+      "精通": "缓速",
+      "价格": "1 SP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 25
+    }
+  },
+  {
+    "id": "equipment:双管霰弹枪",
+    "type": "equipment",
+    "name": "双管霰弹枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程20/60；霰弹），枪械，后坐，换弹(2)，双手",
+      "精通": "散射",
+      "重量": "8",
+      "价格": "175 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 26
+    }
+  },
+  {
+    "id": "equipment:狩猎步枪",
+    "type": "equipment",
+    "name": "狩猎步枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程80/320；子弹），枪械，换弹(4)，双手",
+      "精通": "开镜",
+      "重量": "8",
+      "价格": "150 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 27
+    }
+  },
+  {
+    "id": "equipment:袖珍手枪",
+    "type": "equipment",
+    "name": "袖珍手枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d4",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程30/120；子弹），枪械，轻型，换弹(2)",
+      "精通": "侵扰",
+      "重量": "1",
+      "价格": "75 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 28
+    }
+  },
+  {
+    "id": "equipment:左轮枪",
+    "type": "equipment",
+    "name": "左轮枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程30/120；子弹），枪械，后坐，换弹(6)",
+      "精通": "缓速",
+      "重量": "3",
+      "价格": "125 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 29
+    }
+  },
+  {
+    "id": "equipment:信号枪",
+    "type": "equipment",
+    "name": "信号枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d6",
+      "伤害类型": "火焰",
+      "属性": "弹药（射程30/120；信号弹），枪械，装填",
+      "精通": "缓速",
+      "重量": "1",
+      "价格": "100 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 30
+    }
+  },
+  {
+    "id": "equipment:手枪",
+    "type": "equipment",
+    "name": "手枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "简易远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "简易远程武器",
+      "伤害": "2d4",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程30/120；子弹），枪械，轻型，换弹(10)",
+      "精通": "侵扰",
+      "重量": "3",
+      "价格": "125 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 31
+    }
+  },
+  {
+    "id": "equipment:战斧",
+    "type": "equipment",
+    "name": "战斧",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "挥砍",
+      "属性": "多用（1d10）",
+      "精通": "失衡",
+      "重量": "4",
+      "价格": "10 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 32
+    }
+  },
+  {
+    "id": "equipment:链枷",
+    "type": "equipment",
+    "name": "链枷",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "钝击",
+      "精通": "削弱",
+      "重量": "2",
+      "价格": "10 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 33
+    }
+  },
+  {
+    "id": "equipment:长柄刀",
+    "type": "equipment",
+    "name": "长柄刀",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d10",
+      "伤害类型": "挥砍",
+      "属性": "重型，触及，双手",
+      "精通": "擦掠",
+      "重量": "6",
+      "价格": "20 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 34
+    }
+  },
+  {
+    "id": "equipment:巨斧",
+    "type": "equipment",
+    "name": "巨斧",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d12",
+      "伤害类型": "挥砍",
+      "属性": "重型，双手",
+      "精通": "横扫",
+      "重量": "7",
+      "价格": "30 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 35
+    }
+  },
+  {
+    "id": "equipment:巨剑",
+    "type": "equipment",
+    "name": "巨剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "2d6",
+      "伤害类型": "挥砍",
+      "属性": "重型，双手",
+      "精通": "擦掠",
+      "重量": "6",
+      "价格": "50 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 36
+    }
+  },
+  {
+    "id": "equipment:戟",
+    "type": "equipment",
+    "name": "戟",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d10",
+      "伤害类型": "挥砍",
+      "属性": "重型，触及，双手",
+      "精通": "横扫",
+      "重量": "6",
+      "价格": "20 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 37
+    }
+  },
+  {
+    "id": "equipment:骑枪",
+    "type": "equipment",
+    "name": "骑枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d10",
+      "伤害类型": "穿刺",
+      "属性": "重型，触及，双手（骑乘时除外）",
+      "精通": "失衡",
+      "重量": "6",
+      "价格": "10 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 38
+    }
+  },
+  {
+    "id": "equipment:长剑",
+    "type": "equipment",
+    "name": "长剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "挥砍",
+      "属性": "多用（1d10）",
+      "精通": "削弱",
+      "重量": "3",
+      "价格": "15 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 39
+    }
+  },
+  {
+    "id": "equipment:巨锤",
+    "type": "equipment",
+    "name": "巨锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "2d6",
+      "伤害类型": "钝击",
+      "属性": "重型，双手",
+      "精通": "失衡",
+      "重量": "10",
+      "价格": "10 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 40
+    }
+  },
+  {
+    "id": "equipment:钉头锤",
+    "type": "equipment",
+    "name": "钉头锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "精通": "削弱",
+      "重量": "4",
+      "价格": "15 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 41
+    }
+  },
+  {
+    "id": "equipment:长矛",
+    "type": "equipment",
+    "name": "长矛",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d10",
+      "伤害类型": "穿刺",
+      "属性": "重型，触及，双手",
+      "精通": "推离",
+      "重量": "18",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 42
+    }
+  },
+  {
+    "id": "equipment:刺剑",
+    "type": "equipment",
+    "name": "刺剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "灵巧",
+      "精通": "侵扰",
+      "重量": "2",
+      "价格": "25 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 43
+    }
+  },
+  {
+    "id": "equipment:弯刀",
+    "type": "equipment",
+    "name": "弯刀",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，轻型",
+      "精通": "迅击",
+      "重量": "3",
+      "价格": "25 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 44
+    }
+  },
+  {
+    "id": "equipment:短剑",
+    "type": "equipment",
+    "name": "短剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "穿刺",
+      "属性": "灵巧，轻型",
+      "精通": "侵扰",
+      "重量": "2",
+      "价格": "10 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 45
+    }
+  },
+  {
+    "id": "equipment:三叉戟",
+    "type": "equipment",
+    "name": "三叉戟",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "投掷（射程 20/60），多用（1d10）",
+      "精通": "失衡",
+      "重量": "4",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 46
+    }
+  },
+  {
+    "id": "equipment:战镐",
+    "type": "equipment",
+    "name": "战镐",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "多用（1d10）",
+      "精通": "削弱",
+      "重量": "2",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 47
+    }
+  },
+  {
+    "id": "equipment:战锤",
+    "type": "equipment",
+    "name": "战锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "钝击",
+      "属性": "多用（1d10）",
+      "精通": "推离",
+      "重量": "2",
+      "价格": "15 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 48
+    }
+  },
+  {
+    "id": "equipment:鞭",
+    "type": "equipment",
+    "name": "鞭",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d4",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，触及",
+      "精通": "缓速",
+      "重量": "3",
+      "价格": "2 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 49
+    }
+  },
+  {
+    "id": "equipment:风笛#2",
+    "type": "equipment",
+    "name": "风笛",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "灵巧",
+      "重量": "0.5",
+      "价格": "1 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 50
+    }
+  },
+  {
+    "id": "equipment:制烛人之棒",
+    "type": "equipment",
+    "name": "制烛人之棒",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "2d6",
+      "伤害类型": "钝击",
+      "属性": "重型，双手，特殊",
+      "重量": "10",
+      "价格": "7 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 51
+    }
+  },
+  {
+    "id": "equipment:蒲公英矛",
+    "type": "equipment",
+    "name": "蒲公英矛",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "重型，触及，多用（1d10）",
+      "重量": "6",
+      "价格": "5 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 52
+    }
+  },
+  {
+    "id": "equipment:传动轴",
+    "type": "equipment",
+    "name": "传动轴",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "3d4",
+      "伤害类型": "钝击",
+      "属性": "重型，双手",
+      "重量": "20",
+      "价格": "100 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 53
+    }
+  },
+  {
+    "id": "equipment:隆隆匕首",
+    "type": "equipment",
+    "name": "隆隆匕首",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，轻型，投掷（20/60尺）",
+      "重量": "1",
+      "价格": "15 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 54
+    }
+  },
+  {
+    "id": "equipment:秘石剑",
+    "type": "equipment",
+    "name": "秘石剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "轻型，多用（1d8）",
+      "重量": "1",
+      "价格": "30 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 55
+    }
+  },
+  {
+    "id": "equipment:牧羊钩",
+    "type": "equipment",
+    "name": "牧羊钩",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "触及，特殊",
+      "重量": "4",
+      "价格": "7 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 56
+    }
+  },
+  {
+    "id": "equipment:沙袋锤",
+    "type": "equipment",
+    "name": "沙袋锤",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "钝击",
+      "属性": "触及，多用（1d8）",
+      "重量": "5",
+      "价格": "1 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 57
+    }
+  },
+  {
+    "id": "equipment:脊骨剑",
+    "type": "equipment",
+    "name": "脊骨剑",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "特殊",
+      "重量": "1",
+      "价格": "6 SP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 58
+    }
+  },
+  {
+    "id": "equipment:跳马斧",
+    "type": "equipment",
+    "name": "跳马斧",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d10",
+      "伤害类型": "挥砍",
+      "属性": "重型，触及，特殊，双手",
+      "重量": "15",
+      "价格": "5 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 59
+    }
+  },
+  {
+    "id": "equipment:野矛",
+    "type": "equipment",
+    "name": "野矛",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用近战武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用近战武器",
+      "伤害": "1d6",
+      "伤害类型": "挥砍",
+      "属性": "灵巧，投掷（30/90尺），多用（1d8）",
+      "重量": "1",
+      "价格": "2 GP",
+      "检定属性": "力量"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 60
+    }
+  },
+  {
+    "id": "equipment:吹箭筒",
+    "type": "equipment",
+    "name": "吹箭筒",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 25/100；吹矢），装填",
+      "精通": "侵扰",
+      "重量": "1",
+      "价格": "10 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 61
+    }
+  },
+  {
+    "id": "equipment:手弩",
+    "type": "equipment",
+    "name": "手弩",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 30/120；弩矢），轻型，装填",
+      "精通": "侵扰",
+      "重量": "3",
+      "价格": "75 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 62
+    }
+  },
+  {
+    "id": "equipment:重弩",
+    "type": "equipment",
+    "name": "重弩",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d10",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 100/400；弩矢），重型，装填，双手",
+      "精通": "推离",
+      "重量": "18",
+      "价格": "50 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 63
+    }
+  },
+  {
+    "id": "equipment:长弓",
+    "type": "equipment",
+    "name": "长弓",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d8",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 150/600；箭矢），重型，双手",
+      "精通": "缓速",
+      "重量": "2",
+      "价格": "50 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 64
+    }
+  },
+  {
+    "id": "equipment:火铳",
+    "type": "equipment",
+    "name": "火铳",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d12",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 40/120；子弹），装填，双手",
+      "精通": "缓速",
+      "重量": "10",
+      "价格": "500 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 65
+    }
+  },
+  {
+    "id": "equipment:手铳",
+    "type": "equipment",
+    "name": "手铳",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d10",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程 30/90；子弹），装填",
+      "精通": "侵扰",
+      "重量": "3",
+      "价格": "250 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 66
+    }
+  },
+  {
+    "id": "equipment:喇叭铳",
+    "type": "equipment",
+    "name": "喇叭铳",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d12",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程20/60；射弹），重型，装填，双手",
+      "精通": "散射",
+      "重量": "15",
+      "价格": "750 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 67
+    }
+  },
+  {
+    "id": "equipment:火铳#2",
+    "type": "equipment",
+    "name": "火铳",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d12",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程40/120；子弹），装填，双手",
+      "精通": "缓速",
+      "重量": "10",
+      "价格": "500 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 68
+    }
+  },
+  {
+    "id": "equipment:手铳#2",
+    "type": "equipment",
+    "name": "手铳",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "1d10",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程30/90；子弹），装填",
+      "精通": "侵扰",
+      "重量": "3",
+      "价格": "250 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 69
+    }
+  },
+  {
+    "id": "equipment:加农炮",
+    "type": "equipment",
+    "name": "加农炮",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d8",
+      "伤害类型": "火焰",
+      "属性": "弹药（射程100/400；加农炮弹），枪械，重型，装填，双手",
+      "精通": "爆裂",
+      "重量": "225",
+      "价格": "1500 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 70
+    }
+  },
+  {
+    "id": "equipment:加特林机枪",
+    "type": "equipment",
+    "name": "加特林机枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程60/240；子弹），枪械，重型，换弹(40)，双手",
+      "精通": "自动",
+      "重量": "125",
+      "价格": "750 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 71
+    }
+  },
+  {
+    "id": "equipment:马格南",
+    "type": "equipment",
+    "name": "马格南",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d8",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程30/120；子弹），枪械，重型，后坐，换弹(6)",
+      "精通": "缓速",
+      "重量": "6",
+      "价格": "600 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 72
+    }
+  },
+  {
+    "id": "equipment:突击步枪",
+    "type": "equipment",
+    "name": "突击步枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d6",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程80/320；子弹），枪械，换弹(20)，双手",
+      "精通": "自动",
+      "重量": "7",
+      "价格": "300 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 73
+    }
+  },
+  {
+    "id": "equipment:泵动式霰弹枪",
+    "type": "equipment",
+    "name": "泵动式霰弹枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d8",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程20/60；霰弹），枪械，重型，后坐，换弹(8)，双手",
+      "精通": "散射",
+      "重量": "7",
+      "价格": "550 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 74
+    }
+  },
+  {
+    "id": "equipment:狙击步枪",
+    "type": "equipment",
+    "name": "狙击步枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d8",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程100/400；子弹），枪械，重型，装填，双手",
+      "精通": "开镜",
+      "重量": "8",
+      "价格": "450 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 75
+    }
+  },
+  {
+    "id": "equipment:冲锋枪",
+    "type": "equipment",
+    "name": "冲锋枪",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d4",
+      "伤害类型": "穿刺",
+      "属性": "弹药（射程20/60；子弹），枪械，轻型，换弹(16)",
+      "精通": "自动",
+      "重量": "6",
+      "价格": "250 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 76
+    }
+  },
+  {
+    "id": "equipment:鸣玉泡泡杖",
+    "type": "equipment",
+    "name": "鸣玉泡泡杖",
+    "en": "",
+    "category": "武器",
+    "tags": [
+      "军用远程武器"
+    ],
+    "summary": "",
+    "text": "",
+    "fields": {
+      "类型": "军用远程武器",
+      "伤害": "2d4",
+      "伤害类型": "钝击",
+      "属性": "弹药（射程50/200尺）",
+      "重量": "1",
+      "价格": "22 GP",
+      "检定属性": "敏捷"
+    },
+    "source": "",
+    "cardRef": {
+      "sheet": "装备",
+      "row": 77
+    }
+  }
+]

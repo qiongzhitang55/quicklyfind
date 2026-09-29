@@ -1,0 +1,128 @@
+[
+ {
+  "sheet": "背景",
+  "protected": true,
+  "unlocked_content": 21,
+  "unlocked_formula": 5,
+  "dv": 0
+ },
+ {
+  "sheet": "Irene",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "数据表",
+  "protected": false,
+  "unlocked_content": 10,
+  "unlocked_formula": 1,
+  "dv": 2
+ },
+ {
+  "sheet": "职业",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 1
+ },
+ {
+  "sheet": "装备",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "种族",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "专长与据点",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "背景数据",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "主要",
+  "protected": true,
+  "unlocked_content": 188,
+  "unlocked_formula": 114,
+  "dv": 48
+ },
+ {
+  "sheet": "背包",
+  "protected": true,
+  "unlocked_content": 30,
+  "unlocked_formula": 1,
+  "dv": 4
+ },
+ {
+  "sheet": "盟友与魔宠",
+  "protected": true,
+  "unlocked_content": 25,
+  "unlocked_formula": 0,
+  "dv": 4
+ },
+ {
+  "sheet": "据点",
+  "protected": true,
+  "unlocked_content": 1,
+  "unlocked_formula": 0,
+  "dv": 9
+ },
+ {
+  "sheet": "法术书",
+  "protected": true,
+  "unlocked_content": 9,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "法术大全",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "圆形效应范围",
+  "protected": false,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "骰娘导入",
+  "protected": true,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ },
+ {
+  "sheet": "自定义调整栏",
+  "protected": true,
+  "unlocked_content": 30,
+  "unlocked_formula": 0,
+  "dv": 4
+ },
+ {
+  "sheet": "更新",
+  "protected": true,
+  "unlocked_content": 0,
+  "unlocked_formula": 0,
+  "dv": 0
+ }
+]
